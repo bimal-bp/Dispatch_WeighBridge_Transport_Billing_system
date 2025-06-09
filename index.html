@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGX Micro Division Plant Performance Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            grid-gap: 20px;
+            padding: 20px;
+        }
+        .header {
+            grid-column: 1 / -1;
+            background-color: #2c3e50;
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .card {
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 15px;
+        }
+        .card-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #2c3e50;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+        }
+        .kpi-container {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+        .kpi {
+            text-align: center;
+            padding: 10px;
+            min-width: 120px;
+        }
+        .kpi-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #3498db;
+        }
+        .kpi-label {
+            font-size: 12px;
+            color: #7f8c8d;
+        }
+        .positive {
+            color: #27ae60;
+        }
+        .negative {
+            color: #e74c3c;
+        }
+        .neutral {
+            color: #3498db;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .chart-container {
+            position: relative;
+            height: 100%;
+            width: 100%;
+        }
+        .col-4 {
+            grid-column: span 4;
+        }
+        .col-6 {
+            grid-column: span 6;
+        }
+        .col-8 {
+            grid-column: span 8;
+        }
+        .col-12 {
+            grid-column: span 12;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        .status-good {
+            background-color: #2ecc71;
+        }
+        .status-warning {
+            background-color: #f39c12;
+        }
+        .status-critical {
+            background-color: #e74c3c;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="header">
+            <h1>SGX Micro Division Plant Performance Dashboard</h1>
+            <div>As of Date: 07/06/2025</div>
+        </div>
+
+        <!-- KPI Summary Row -->
+        <div class="card col-12">
+            <div class="card-title">Key Performance Indicators</div>
+            <div class="kpi-container">
+                <div class="kpi">
+                    <div class="kpi-value">77</div>
+                    <div class="kpi-label">Dryer Output (FTD MT)</div>
+                </div>
+                <div class="kpi">
+                    <div class="kpi-value">43.5</div>
+                    <div class="kpi-label">VRM Output (FTD MT)</div>
+                </div>
+                <div class="kpi">
+                    <div class="kpi-value">9.63</div>
+                    <div class="kpi-label">Dryer TPH (FTD)</div>
+                </div>
+                <div class="kpi">
+                    <div class="kpi-value">17.4</div>
+                    <div class="kpi-label">VRM TPH (FTD)</div>
+                </div>
+                <div class="kpi">
+                    <div class="kpi-value">67.02</div>
+                    <div class="kpi-label">Dispatch (FTD MT)</div>
+                </div>
+                <div class="kpi">
+                    <div class="kpi-value">33.98</div>
+                    <div class="kpi-label">RM Received (FTD MT)</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Production Overview -->
+        <div class="card col-6">
+            <div class="card-title">Production Overview</div>
+            <div class="chart-container">
+                <canvas id="productionChart"></canvas>
+            </div>
+        </div>
+
+        <!-- TPH Comparison -->
+        <div class="card col-6">
+            <div class="card-title">TPH Comparison</div>
+            <div class="chart-container">
+                <canvas id="tphChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Shift Performance -->
+        <div class="card col-6">
+            <div class="card-title">Shift Performance (FTD)</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Metric</th>
+                        <th>Day Shift</th>
+                        <th>Night Shift</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>VRM Production (MT)</td>
+                        <td>43.5</td>
+                        <td>0</td>
+                        <td>43.5</td>
+                    </tr>
+                    <tr>
+                        <td>VRM Running Hrs</td>
+                        <td>2.5</td>
+                        <td>0</td>
+                        <td>2.5</td>
+                    </tr>
+                    <tr>
+                        <td>VRM TPH</td>
+                        <td>17.4</td>
+                        <td>N/A</td>
+                        <td>17.4</td>
+                    </tr>
+                    <tr>
+                        <td>Dryer Production (MT)</td>
+                        <td>52</td>
+                        <td>25</td>
+                        <td>77</td>
+                    </tr>
+                    <tr>
+                        <td>Dryer Running Hrs</td>
+                        <td>5.5</td>
+                        <td>2.5</td>
+                        <td>8</td>
+                    </tr>
+                    <tr>
+                        <td>Dryer TPH</td>
+                        <td>9.45</td>
+                        <td>10</td>
+                        <td>9.63</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Dispatch Details -->
+        <div class="card col-6">
+            <div class="card-title">Dispatch Details (FTD)</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>MT</th>
+                        <th>No of Vehicles</th>
+                        <th>Location 1</th>
+                        <th>Location 2</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Product-1 (AMS)</td>
+                        <td>67.02</td>
+                        <td>2</td>
+                        <td>35.49 MT (KA567789)</td>
+                        <td>31.53 MT (KA399761)</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Plant Operations -->
+        <div class="card col-6">
+            <div class="card-title">Plant Operations (FTD)</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Unit</th>
+                        <th>Output (MT)</th>
+                        <th>Running Hrs</th>
+                        <th>TPH</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Dryer</td>
+                        <td>77</td>
+                        <td>8</td>
+                        <td>9.63</td>
+                        <td><span class="status-indicator status-good"></span> Operational</td>
+                    </tr>
+                    <tr>
+                        <td>VRM</td>
+                        <td>43.5</td>
+                        <td>2.5</td>
+                        <td>17.4</td>
+                        <td><span class="status-indicator status-warning"></span> Bag House Chockup</td>
+                    </tr>
+                    <tr>
+                        <td>JCB</td>
+                        <td>N/A</td>
+                        <td>12.4</td>
+                        <td>N/A</td>
+                        <td><span class="status-indicator status-good"></span> Operational</td>
+                    </tr>
+                    <tr>
+                        <td>Bagging Machine</td>
+                        <td>43.5</td>
+                        <td>N/A</td>
+                        <td>N/A</td>
+                        <td><span class="status-indicator status-warning"></span> Need More Machines</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Stock Details -->
+        <div class="card col-6">
+            <div class="card-title">Stock Details</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Material</th>
+                        <th>Opening</th>
+                        <th>Production/Received</th>
+                        <th>Dispatch/Used</th>
+                        <th>Stock</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Product-1 MS-AMS</td>
+                        <td>49 MT</td>
+                        <td>43.5 MT</td>
+                        <td>67.2 MT</td>
+                        <td>25.3 MT</td>
+                    </tr>
+                    <tr>
+                        <td>SGX Raw Material</td>
+                        <td>101 MT</td>
+                        <td>63 MT</td>
+                        <td>36 MT</td>
+                        <td>128 MT</td>
+                    </tr>
+                    <tr>
+                        <td>RWM-1 RH</td>
+                        <td>47.7 MT</td>
+                        <td>30 MT</td>
+                        <td>36 MT</td>
+                        <td>41.7 MT</td>
+                    </tr>
+                    <tr>
+                        <td>MS-AMS Bags</td>
+                        <td>5000</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td>5000</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Issues & Maintenance -->
+        <div class="card col-12">
+            <div class="card-title">Major Issues & Maintenance</div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                    <h4>Current Issues:</h4>
+                    <ul>
+                        <li>VRM bag House chockup due to high output</li>
+                        <li>High TPH is not operated by 2 bag packing machine - need to add more bag packing machines</li>
+                        <li>Dry material causing conveyor belt slippage issues</li>
+                        <li>Manpower not matching with packing speed</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4>Recent Maintenance:</h4>
+                    <ul>
+                        <li>Dryer: POWER SUPPLY, PHOTOCELL replaced (30 mins)</li>
+                        <li>VRM maintenance: 1 hour</li>
+                        <li>Non-working hours: Maintenance (2 hrs), No Electricity (1 hr), No Feed (8 hrs)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Production Overview Chart
+        const productionCtx = document.getElementById('productionChart').getContext('2d');
+        const productionChart = new Chart(productionCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Dryer', 'VRM'],
+                datasets: [
+                    {
+                        label: 'FTD Output (MT)',
+                        data: [77, 43.5],
+                        backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'MTD Output (MT)',
+                        data: [282.5, 274.85],
+                        backgroundColor: 'rgba(75, 192, 192, 0.7)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Output (MT)'
+                        }
+                    }
+                }
+            }
+        });
+
+        // TPH Comparison Chart
+        const tphCtx = document.getElementById('tphChart').getContext('2d');
+        const tphChart = new Chart(tphCtx, {
+            type: 'radar',
+            data: {
+                labels: ['Dryer FTD', 'VRM FTD', 'Dryer MTD', 'VRM MTD'],
+                datasets: [{
+                    label: 'TPH Comparison',
+                    data: [9.625, 17.4, 10.27, 10.31],
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    pointBackgroundColor: 'rgba(255, 99, 132, 1)',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: 'rgba(255, 99, 132, 1)'
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    r: {
+                        angleLines: {
+                            display: true
+                        },
+                        suggestedMin: 0,
+                        suggestedMax: 20
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
