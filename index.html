@@ -129,7 +129,7 @@
     <div class="dashboard">
         <div class="header">
             <h1>SGX Micro Division Plant Performance Dashboard</h1>
-            <div>As of Date: 06/06/2025</div>
+            <div>As of Date: 07/06/2025</div>
         </div>
 
         <!-- KPI Summary Row -->
@@ -372,7 +372,7 @@
     </div>
 
     <script>
-        // FTD Production Chart
+        // FTD Production Chart (bar chart)
         const ftdCtx = document.getElementById('ftdChart').getContext('2d');
         const ftdChart = new Chart(ftdCtx, {
             type: 'bar',
@@ -392,6 +392,9 @@
                     title: {
                         display: true,
                         text: 'FTD Production (07/06/2025)'
+                    },
+                    datalabels: {
+                        display: false
                     }
                 },
                 scales: {
@@ -403,20 +406,26 @@
                         }
                     }
                 }
-            }
+            },
+            plugins: [ChartDataLabels]
         });
 
-        // MTD Production Chart
+        // MTD Production Chart (pie chart)
         const mtdCtx = document.getElementById('mtdChart').getContext('2d');
         const mtdChart = new Chart(mtdCtx, {
-            type: 'bar',
+            type: 'pie',
             data: {
                 labels: ['Dryer', 'VRM'],
                 datasets: [{
-                    label: 'MTD Output (MT)',
                     data: [282.5, 274.85],
-                    backgroundColor: 'rgba(75, 192, 192, 0.7)',
-                    borderColor: 'rgba(75, 192, 192, 1)',
+                    backgroundColor: [
+                        'rgba(54, 162, 235, 0.7)',
+                        'rgba(75, 192, 192, 0.7)'
+                    ],
+                    borderColor: [
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(75, 192, 192, 1)'
+                    ],
                     borderWidth: 1
                 }]
             },
@@ -425,19 +434,26 @@
                 plugins: {
                     title: {
                         display: true,
-                        text: 'MTD Production (Month to Date)'
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: 'Output (MT)'
+                        text: 'MTD Production Distribution (Month to Date)'
+                    },
+                    legend: {
+                        position: 'bottom'
+                    },
+                    datalabels: {
+                        formatter: (value, ctx) => {
+                            let sum = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                            let percentage = (value * 100 / sum).toFixed(1) + "%";
+                            return percentage;
+                        },
+                        color: '#fff',
+                        font: {
+                            weight: 'bold',
+                            size: 14
                         }
                     }
                 }
-            }
+            },
+            plugins: [ChartDataLabels]
         });
     </script>
 </body>
