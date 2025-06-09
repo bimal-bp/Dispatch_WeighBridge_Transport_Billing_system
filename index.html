@@ -88,6 +88,12 @@
             position: relative;
             height: 100%;
             width: 100%;
+            min-height: 250px;
+        }
+        .chart-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
         }
         .col-4 {
             grid-column: span 4;
@@ -158,14 +164,17 @@
         </div>
 
         <!-- Production Overview -->
-        <div class="card col-6">
+        <div class="card col-12">
             <div class="card-title">Production Overview</div>
-            <div class="chart-container">
-                <canvas id="productionChart"></canvas>
+            <div class="chart-row">
+                <div class="chart-container">
+                    <canvas id="ftdChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <canvas id="mtdChart"></canvas>
+                </div>
             </div>
         </div>
-
-
 
         <!-- Shift Performance -->
         <div class="card col-6">
@@ -363,31 +372,28 @@
     </div>
 
     <script>
-        // Production Overview Chart
-        const productionCtx = document.getElementById('productionChart').getContext('2d');
-        const productionChart = new Chart(productionCtx, {
+        // FTD Production Chart
+        const ftdCtx = document.getElementById('ftdChart').getContext('2d');
+        const ftdChart = new Chart(ftdCtx, {
             type: 'bar',
             data: {
                 labels: ['Dryer', 'VRM'],
-                datasets: [
-                    {
-                        label: 'FTD Output (MT)',
-                        data: [77, 43.5],
-                        backgroundColor: 'rgba(54, 162, 235, 0.7)',
-                        borderColor: 'rgba(54, 162, 235, 1)',
-                        borderWidth: 1
-                    },
-                    {
-                        label: 'MTD Output (MT)',
-                        data: [282.5, 274.85],
-                        backgroundColor: 'rgba(75, 192, 192, 0.7)',
-                        borderColor: 'rgba(75, 192, 192, 1)',
-                        borderWidth: 1
-                    }
-                ]
+                datasets: [{
+                    label: 'FTD Output (MT)',
+                    data: [77, 43.5],
+                    backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
             },
             options: {
                 responsive: true,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'FTD Production (07/06/2025)'
+                    }
+                },
                 scales: {
                     y: {
                         beginAtZero: true,
@@ -400,32 +406,35 @@
             }
         });
 
-        // TPH Comparison Chart
-        const tphCtx = document.getElementById('tphChart').getContext('2d');
-        const tphChart = new Chart(tphCtx, {
-            type: 'radar',
+        // MTD Production Chart
+        const mtdCtx = document.getElementById('mtdChart').getContext('2d');
+        const mtdChart = new Chart(mtdCtx, {
+            type: 'bar',
             data: {
-                labels: ['Dryer FTD', 'VRM FTD', 'Dryer MTD', 'VRM MTD'],
+                labels: ['Dryer', 'VRM'],
                 datasets: [{
-                    label: 'TPH Comparison',
-                    data: [9.625, 17.4, 10.27, 10.31],
-                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                    borderColor: 'rgba(255, 99, 132, 1)',
-                    pointBackgroundColor: 'rgba(255, 99, 132, 1)',
-                    pointBorderColor: '#fff',
-                    pointHoverBackgroundColor: '#fff',
-                    pointHoverBorderColor: 'rgba(255, 99, 132, 1)'
+                    label: 'MTD Output (MT)',
+                    data: [282.5, 274.85],
+                    backgroundColor: 'rgba(75, 192, 192, 0.7)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
                 }]
             },
             options: {
                 responsive: true,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'MTD Production (Month to Date)'
+                    }
+                },
                 scales: {
-                    r: {
-                        angleLines: {
-                            display: true
-                        },
-                        suggestedMin: 0,
-                        suggestedMax: 20
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Output (MT)'
+                        }
                     }
                 }
             }
