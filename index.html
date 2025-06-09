@@ -94,7 +94,7 @@
             position: relative;
             height: 80%;
             width: 80%;
-            min-height: 200px;
+            min-height: 250px; /* Increased height for pie chart */
             margin: 0 auto;
         }
         .chart-row {
@@ -388,9 +388,17 @@
                 datasets: [{
                     label: 'FTD Output (MT)',
                     data: [77, 43.5],
-                    backgroundColor: 'rgba(54, 162, 235, 0.7)',
-                    borderColor: 'rgba(54, 162, 235, 1)',
-                    borderWidth: 1
+                    backgroundColor: [
+                        'rgba(54, 162, 235, 0.7)',
+                        'rgba(75, 192, 192, 0.7)'
+                    ],
+                    borderColor: [
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(75, 192, 192, 1)'
+                    ],
+                    borderWidth: 1,
+                    barPercentage: 0.4, // Reduced bar width
+                    categoryPercentage: 0.5
                 }]
             },
             options: {
@@ -402,7 +410,13 @@
                         text: 'FTD Production (07/06/2025)'
                     },
                     datalabels: {
-                        display: false
+                        display: true,
+                        color: '#000',
+                        anchor: 'end',
+                        align: 'top',
+                        formatter: function(value) {
+                            return value + ' MT';
+                        }
                     }
                 },
                 scales: {
@@ -418,7 +432,7 @@
             plugins: [ChartDataLabels]
         });
 
-        // MTD Production Chart (pie chart) - now smaller
+        // MTD Production Chart (pie chart) - now larger
         const mtdCtx = document.getElementById('mtdChart').getContext('2d');
         const mtdChart = new Chart(mtdCtx, {
             type: 'pie',
@@ -452,7 +466,7 @@
                         formatter: (value, ctx) => {
                             let sum = ctx.dataset.data.reduce((a, b) => a + b, 0);
                             let percentage = (value * 100 / sum).toFixed(1) + "%";
-                            return percentage;
+                            return percentage + '\n(' + value + ' MT)';
                         },
                         color: '#fff',
                         font: {
