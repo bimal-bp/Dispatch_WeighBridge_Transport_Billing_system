@@ -192,7 +192,30 @@
                 </div>
                 <div class="col-md-4">
                     <label for="clientDetails" class="form-label">Client Details</label>
-                    <input type="text" class="form-control" id="clientDetails">
+                    <select class="form-select" id="clientDetails">
+                        <option value="">Select Client</option>
+                        <option value="L & T P1 – Rambali">L & T P1 – Rambali</option>
+                        <option value="L & T P2 – Rambali">L & T P2 – Rambali</option>
+                        <option value="KEC – Rambali">KEC – Rambali</option>
+                        <option value="JS Mining – Rambali">JS Mining – Rambali</option>
+                        <option value="ITD – Rambali">ITD – Rambali</option>
+                        <option value="Sowaparnika – Rambali">Sowaparnika – Rambali</option>
+                        <option value="L & T Jio – Sindhiya">L & T Jio – Sindhiya</option>
+                        <option value="Arabind – Shela Nagar">Arabind – Shela Nagar</option>
+                        <option value="RKD – Shela Nagar">RKD – Shela Nagar</option>
+                        <option value="Afcyan – Shela Ngr">Afcyan – Shela Ngr</option>
+                        <option value="Bharath Verma – Airport">Bharath Verma – Airport</option>
+                        <option value="Aparna RMC – Gajuwaka">Aparna RMC – Gajuwaka</option>
+                        <option value="ACC RMC – Gajuwaka">ACC RMC – Gajuwaka</option>
+                        <option value="Prisam RMC – Gajuwaka">Prisam RMC – Gajuwaka</option>
+                        <option value="Nuvoco RMC – Gajuwaka">Nuvoco RMC – Gajuwaka</option>
+                        <option value="Ultratech – Mindi">Ultratech – Mindi</option>
+                        <option value="MK Builders – Madhurwada">MK Builders – Madhurwada</option>
+                        <option value="North Star Homes – Madhurwada">North Star Homes – Madhurwada</option>
+                        <option value="Coastal RMC – Madhurwada">Coastal RMC – Madhurwada</option>
+                        <option value="Coastal RMC – Achututapuram">Coastal RMC – Achututapuram</option>
+                        <option value="Vizag Port – Vizag Port">Vizag Port – Vizag Port</option>
+                    </select>
                 </div>
             </div>
             <!-- Payment Information -->
@@ -330,6 +353,7 @@
             <div class="btn-container">
                 <button type="submit" class="btn btn-success">Save Entry</button>
                 <button type="button" class="btn btn-primary" id="btnExportExcel">Export to Excel</button>
+                <button type="reset" class="btn btn-secondary">Reset Form</button>
             </div>
         </form>
     </div>
@@ -515,6 +539,7 @@
         let currentDispatchReportData = null;
         let currentFtdReportData = null;
         let currentTransportReportData = null;
+        
         document.addEventListener('DOMContentLoaded', function() {
             // Initialize vehicle dropdown
             const vehicleDropdown = document.getElementById('vehicleDropdown');
@@ -1656,4 +1681,69 @@
                     body: tableData,
                     startY: vehicleNo ? 30 : 25,
                     theme: 'grid',
-                    styles: { fontSize
+                    styles: { fontSize: 8 },
+                    headStyles: { fillColor: [100, 100, 100] }
+                });
+              
+                // Save the PDF
+                const fileName = `Transport_Bill_${startDate}_to_${endDate}${vehicleNo ? '_' + vehicleNo : ''}.pdf`;
+                doc.save(fileName);
+            }
+          
+            function exportToExcel() {
+                if (allRecords.length === 0) {
+                    alert("No records to export.");
+                    return;
+                }
+              
+                // Prepare data for Excel
+                const data = allRecords.map(record => ({
+                    'Accounting Date': record.accountingDate,
+                    'Date': record.date,
+                    'Shift': record.shift,
+                    'Weighment Slip No': record.weighmentSlipNo,
+                    'DC No': record.deliveryChallanNo,
+                    'Royalty Permit No': record.royaltyPermitNo,
+                    'Permit Qty (CM)': record.permitQty,
+                    'Customer Sr No': record.customerSrNo,
+                    'Customer Name': record.customerName,
+                    'Client Details': record.clientDetails,
+                    'Payment Terms': record.paymentMode,
+                    'Vehicle No': record.vehicleNo,
+                    'Material': record.materialType,
+                    'Gross WT': record.grossWt,
+                    'Tare WT': record.tareWt,
+                    'NET WT': record.netWt,
+                    'Rate Per Tone': record.ratePerTone,
+                    'Amount': record.saleAmount,
+                    'Cash Received': record.cashReceived,
+                    'Advance Received': record.advanceReceived,
+                    'Customer Balance': record.customerBalance,
+                    'Remarks': record.remarks,
+                    'Royalty Rate': record.royaltyRate,
+                    'Royalty Amount': record.royaltyAmount,
+                    'Transport Rate': record.transportRate,
+                    'Transport Amount': record.transportAmount,
+                    'Total Amount': record.totalAmount
+                }));
+              
+                // Create worksheet
+                const ws = XLSX.utils.json_to_sheet(data);
+              
+                // Create workbook
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, 'Weighment Records');
+              
+                // Generate Excel file
+                const today = new Date().toISOString().split('T')[0];
+                XLSX.writeFile(wb, `Weighment_Records_${today}.xlsx`);
+            }
+          
+            function formatDate(dateString) {
+                const date = new Date(dateString);
+                return date.toLocaleDateString('en-GB'); // DD/MM/YYYY format
+            }
+        });
+    </script>
+</body>
+</html>
