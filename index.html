@@ -459,32 +459,6 @@
                 </tbody>
             </table>
         </div>
-        <!-- Payments FTD Report -->
-        <div class="section-header">Payments FTD Report</div>
-        <div class="row mb-4">
-            <div class="col-md-4">
-                <label for="paymentsFtdReportDate" class="form-label">Select Date for Report</label>
-                <input type="date" class="form-control" id="paymentsFtdReportDate">
-            </div>
-            <div class="col-md-3">
-                <label for="paymentsFtdReportShift" class="form-label">Select Shift</label>
-                <select class="form-select" id="paymentsFtdReportShift">
-                    <option value="A-SHIFT">A-SHIFT</option>
-                    <option value="B-SHIFT">B-SHIFT</option>
-                    <option value="ALL">FULL DAY</option>
-                </select>
-            </div>
-            <div class="col-md-2">
-                <label class="form-label">&nbsp;</label>
-                <button type="button" class="btn btn-primary form-control" id="btnPaymentsFtdReport">Generate Payments FTD Report</button>
-            </div>
-        </div>
-        <div class="report-actions" id="paymentsFtdReportActions" style="display: none;">
-            <button type="button" class="btn btn-success" id="btnDownloadPaymentsFtdPDF">Download PDF Report</button>
-        </div>
-        <div class="table-responsive">
-            <div id="paymentsFtdReportContainer"></div>
-        </div>
     </div>
     <!-- Add Vehicle Modal -->
     <div class="modal fade" id="addVehicleModal" tabindex="-1" aria-labelledby="addVehicleModalLabel" aria-hidden="true">
@@ -552,7 +526,7 @@
         let currentDispatchReportData = null;
         let currentFtdReportData = null;
         let currentTransportReportData = null;
-        let currentPaymentsFtdReportData = null;
+        
         document.addEventListener('DOMContentLoaded', function() {
             // Initialize vehicle dropdown
             const vehicleDropdown = document.getElementById('vehicleDropdown');
@@ -562,6 +536,7 @@
                 option.textContent = vehicle;
                 vehicleDropdown.appendChild(option);
             });
+            
             // Initialize client dropdown
             const clientDropdown = document.getElementById('clientDropdown');
             clientNames.forEach(client => {
@@ -570,6 +545,7 @@
                 option.textContent = client;
                 clientDropdown.appendChild(option);
             });
+            
             // Set default dates to today
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('accountingDate').value = today;
@@ -578,7 +554,7 @@
             document.getElementById('ftdReportDate').value = today;
             document.getElementById('transportBillStartDate').value = today;
             document.getElementById('transportBillEndDate').value = today;
-            document.getElementById('paymentsFtdReportDate').value = today;
+            
             // Event listeners for calculations
             document.getElementById('grossWt').addEventListener('input', calculateValues);
             document.getElementById('tareWt').addEventListener('input', calculateValues);
@@ -587,23 +563,27 @@
             document.getElementById('transportRate').addEventListener('input', calculateValues);
             document.getElementById('cashReceived').addEventListener('input', calculateValues);
             document.getElementById('advanceReceived').addEventListener('input', calculateValues);
+            
             // Vehicle dropdown change event
             document.getElementById('vehicleDropdown').addEventListener('change', function() {
                 if (this.value) {
                     document.getElementById('vehicleNo').value = this.value;
                 }
             });
+            
             // Client dropdown change event
             document.getElementById('clientDropdown').addEventListener('change', function() {
                 if (this.value) {
                     document.getElementById('clientDetails').value = this.value;
                 }
             });
+            
             // Add new vehicle button
             document.getElementById('btnAddVehicle').addEventListener('click', function() {
                 const modal = new bootstrap.Modal(document.getElementById('addVehicleModal'));
                 modal.show();
             });
+            
             // Save new vehicle
             document.getElementById('btnSaveVehicle').addEventListener('click', function() {
                 const newVehicleNo = document.getElementById('newVehicleNo').value.trim().toUpperCase();
@@ -624,11 +604,13 @@
                     alert("Please enter a valid vehicle number.");
                 }
             });
+            
             // Add new client button
             document.getElementById('btnAddClient').addEventListener('click', function() {
                 const modal = new bootstrap.Modal(document.getElementById('addClientModal'));
                 modal.show();
             });
+            
             // Save new client
             document.getElementById('btnSaveClient').addEventListener('click', function() {
                 const newClientName = document.getElementById('newClientName').value.trim();
@@ -649,47 +631,57 @@
                     alert("Please enter a valid client name.");
                 }
             });
+            
             // Report generation buttons
             document.getElementById('btnDispatchReport').addEventListener('click', generateDispatchReport);
             document.getElementById('btnFtdReport').addEventListener('click', generateFtdReport);
             document.getElementById('btnTransportBill').addEventListener('click', generateTransportBill);
-            document.getElementById('btnPaymentsFtdReport').addEventListener('click', generatePaymentsFtdReport);
+            
             // PDF download buttons
             document.getElementById('btnDownloadDispatchPDF').addEventListener('click', downloadDispatchPDF);
             document.getElementById('btnDownloadFtdPDF').addEventListener('click', downloadFtdPDF);
             document.getElementById('btnDownloadTransportPDF').addEventListener('click', downloadTransportPDF);
-            document.getElementById('btnDownloadPaymentsFtdPDF').addEventListener('click', downloadPaymentsFtdPDF);
+            
             // Form submission
             document.getElementById('weighmentForm').addEventListener('submit', function(e) {
                 e.preventDefault();
                 addRecord();
             });
+            
             // Export to Excel button
             document.getElementById('btnExportExcel').addEventListener('click', exportToExcel);
         });
+        
         function calculateValues() {
             const grossWt = parseFloat(document.getElementById('grossWt').value) || 0;
             const tareWt = parseFloat(document.getElementById('tareWt').value) || 0;
             const netWt = grossWt - tareWt;
             document.getElementById('netWt').value = netWt.toFixed(2);
+            
             const ratePerTone = parseFloat(document.getElementById('ratePerTone').value) || 0;
             const saleAmount = netWt * ratePerTone;
             document.getElementById('saleAmount').value = saleAmount.toFixed(2);
+            
             const royaltyRate = parseFloat(document.getElementById('royaltyRate').value) || 0;
             const royaltyAmount = netWt * royaltyRate;
             document.getElementById('royaltyAmount').value = royaltyAmount.toFixed(2);
+            
             const transportRate = parseFloat(document.getElementById('transportRate').value) || 0;
             const transportAmount = netWt * transportRate;
             document.getElementById('transportAmount').value = transportAmount.toFixed(2);
+            
             const totalAmount = saleAmount + royaltyAmount + transportAmount;
             document.getElementById('totalAmount').value = totalAmount.toFixed(2);
+            
             const cashReceived = parseFloat(document.getElementById('cashReceived').value) || 0;
             const advanceReceived = parseFloat(document.getElementById('advanceReceived').value) || 0;
             const customerBalance = totalAmount - cashReceived - advanceReceived;
             document.getElementById('customerBalance').value = customerBalance.toFixed(2);
         }
+        
         function addRecord() {
             calculateValues();
+            
             const record = {
                 id: recordIdCounter++,
                 accountingDate: document.getElementById('accountingDate').value,
@@ -718,16 +710,23 @@
                 totalAmount: parseFloat(document.getElementById('totalAmount').value) || 0,
                 remarks: document.getElementById('remarks').value
             };
+            
             allRecords.push(record);
             updateRecordsTable();
             document.getElementById('weighmentForm').reset();
+            
+            // Set default dates to today again
+            const today = new Date().toISOString().split('T')[0];
             document.getElementById('accountingDate').value = today;
             document.getElementById('date').value = today;
+            
             alert("Record added successfully!");
         }
+        
         function updateRecordsTable() {
             const tableBody = document.getElementById('recordsTable');
             tableBody.innerHTML = '';
+            
             if (allRecords.length === 0) {
                 const row = tableBody.insertRow();
                 const cell = row.insertCell(0);
@@ -736,6 +735,7 @@
                 cell.className = 'text-center';
                 return;
             }
+            
             allRecords.forEach((record, index) => {
                 const row = tableBody.insertRow();
                 row.insertCell(0).textContent = index + 1;
@@ -763,6 +763,7 @@
                 row.insertCell(22).textContent = record.transportRate.toFixed(2);
                 row.insertCell(23).textContent = record.transportAmount.toFixed(2);
                 row.insertCell(24).textContent = record.totalAmount.toFixed(2);
+                
                 const actionsCell = row.insertCell(25);
                 actionsCell.innerHTML = '<button class="btn btn-sm btn-info me-1">View</button><button class="btn btn-sm btn-danger">Delete</button>';
                 actionsCell.querySelector('.btn-danger').addEventListener('click', function() {
@@ -771,27 +772,34 @@
                 });
             });
         }
+        
         function formatDate(dateStr) {
             const date = new Date(dateStr);
             return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
         }
+        
         function generateDispatchReport() {
             const reportDate = document.getElementById('dispatchReportDate').value;
             const reportShift = document.getElementById('dispatchReportShift').value;
+            
             if (!reportDate) {
                 alert("Please select a date for the report.");
                 return;
             }
+            
             let dateRecords = reportShift === "ALL" ?
                 allRecords.filter(record => record.date === reportDate) :
                 allRecords.filter(record => record.date === reportDate && record.shift === reportShift);
+            
             if (dateRecords.length === 0) {
                 alert("No records found for the selected criteria.");
                 document.getElementById('dispatchReportActions').style.display = 'none';
                 return;
             }
+            
             const customerData = {};
             const materialTypes = ["10 MM", "20 MM", "V/SAND", "Scalping", "P/Sand", "40MM", "GSB/WET MIX", "R/Sand"];
+            
             dateRecords.forEach(record => {
                 if (!customerData[record.clientDetails]) {
                     customerData[record.clientDetails] = {
@@ -803,24 +811,30 @@
                         customerData[record.clientDetails].materials[material] = { tonnage: 0, trips: 0 };
                     });
                 }
+                
                 customerData[record.clientDetails].totalTonnage += record.netWt;
                 customerData[record.clientDetails].totalTrips += 1;
+                
                 if (customerData[record.clientDetails].materials[record.materialType]) {
                     customerData[record.clientDetails].materials[record.materialType].tonnage += record.netWt;
                     customerData[record.clientDetails].materials[record.materialType].trips += 1;
                 }
             });
+            
             currentDispatchReportData = { date: reportDate, shift: reportShift, customerData, materialTypes };
             document.getElementById('dispatchReportActions').style.display = 'block';
+            
             let reportHTML = '<table class="table table-bordered">';
             const formattedDate = formatDate(reportDate);
             reportHTML += `<tr class="shift-header"><th colspan="${materialTypes.length + 3}">${reportShift === "ALL" ? "FULL DAY" : reportShift} - Dispatch Vehicle Wise Planning - ${formattedDate}</th></tr>`;
             reportHTML += '<tr class="customer-header"><th>Client Details</th><th>Unit</th>';
             materialTypes.forEach(material => reportHTML += `<th>${material}</th>`);
             reportHTML += '<th>TOTAL</th></tr>';
+            
             let grandTotalTonnage = 0, grandTotalTrips = 0;
             const materialTotals = {};
             materialTypes.forEach(material => materialTotals[material] = { tonnage: 0, trips: 0 });
+            
             for (const customer in customerData) {
                 reportHTML += `<tr><td rowspan="2" style="background-color: #d8bfd8; font-weight: bold;">${customer}</td><td>Total Tonnage (MT)</td>`;
                 materialTypes.forEach(material => {
@@ -829,6 +843,7 @@
                     materialTotals[material].tonnage += tonnage;
                 });
                 reportHTML += `<td class="number-cell">${customerData[customer].totalTonnage.toFixed(2)}</td></tr>`;
+                
                 reportHTML += `<tr><td>Total Trips</td>`;
                 materialTypes.forEach(material => {
                     const trips = customerData[customer].materials[material].trips;
@@ -836,38 +851,48 @@
                     materialTotals[material].trips += trips;
                 });
                 reportHTML += `<td class="number-cell">${customerData[customer].totalTrips}</td></tr>`;
+                
                 grandTotalTonnage += customerData[customer].totalTonnage;
                 grandTotalTrips += customerData[customer].totalTrips;
             }
+            
             reportHTML += `<tr class="total-header"><td colspan="2">GRAND TOTAL</td>`;
             materialTypes.forEach(material => {
                 reportHTML += `<td class="number-cell">${materialTotals[material].tonnage > 0 ? materialTotals[material].tonnage.toFixed(2) : ''}</td>`;
             });
             reportHTML += `<td class="number-cell">${grandTotalTonnage.toFixed(2)}</td></tr>`;
+            
             reportHTML += `<tr class="total-header"><td colspan="2">TOTAL TRIPS</td>`;
             materialTypes.forEach(material => {
                 reportHTML += `<td class="number-cell">${materialTotals[material].trips > 0 ? materialTotals[material].trips : ''}</td>`;
             });
             reportHTML += `<td class="number-cell">${grandTotalTrips}</td></tr>`;
+            
             reportHTML += '</table>';
             document.getElementById('dispatchReportContainer').innerHTML = reportHTML;
         }
+        
         function generateFtdReport() {
             const reportDate = document.getElementById('ftdReportDate').value;
             const reportShift = document.getElementById('ftdReportShift').value;
+            
             if (!reportDate) {
                 alert("Please select a date for the report.");
                 return;
             }
+            
             let dateRecords = reportShift === "ALL" ?
                 allRecords.filter(record => record.date === reportDate) :
                 allRecords.filter(record => record.date === reportDate && record.shift === reportShift);
+            
             if (dateRecords.length === 0) {
                 alert("No records found for the selected criteria.");
                 document.getElementById('ftdReportActions').style.display = 'none';
                 return;
             }
+            
             const vehicleData = {};
+            
             dateRecords.forEach(record => {
                 if (!vehicleData[record.vehicleNo]) {
                     vehicleData[record.vehicleNo] = {
@@ -876,6 +901,7 @@
                         transactions: []
                     };
                 }
+                
                 vehicleData[record.vehicleNo].totalTrips += 1;
                 vehicleData[record.vehicleNo].totalNetWt += record.netWt;
                 vehicleData[record.vehicleNo].transactions.push({
@@ -886,12 +912,15 @@
                     date: record.date
                 });
             });
+            
             currentFtdReportData = { date: reportDate, shift: reportShift, vehicleData };
             document.getElementById('ftdReportActions').style.display = 'block';
+            
             let reportHTML = '<table class="table table-bordered">';
             const formattedDate = formatDate(reportDate);
             reportHTML += `<tr class="shift-header"><th colspan="5">${reportShift === "ALL" ? "FULL DAY" : reportShift} - FTD Report - ${formattedDate}</th></tr>`;
             reportHTML += '<tr class="customer-header"><th>Vehicle No</th><th>Total Trips</th><th>Total NET WT (MT)</th><th>Transaction Details</th></tr>';
+            
             for (const vehicle in vehicleData) {
                 reportHTML += `<tr>
                     <td style="background-color: #d8bfd8; font-weight: bold;">${vehicle}</td>
@@ -903,27 +932,34 @@
                 });
                 reportHTML += `</td></tr>`;
             }
+            
             reportHTML += '</table>';
             document.getElementById('ftdReportContainer').innerHTML = reportHTML;
         }
+        
         function generateTransportBill() {
             const startDate = document.getElementById('transportBillStartDate').value;
             const endDate = document.getElementById('transportBillEndDate').value;
             const vehicleNo = document.getElementById('transportBillVehicle').value.trim();
+            
             if (!startDate || !endDate) {
                 alert("Please select a date range for the report.");
                 return;
             }
+            
             let dateRecords = allRecords.filter(record => record.date >= startDate && record.date <= endDate);
             if (vehicleNo) {
                 dateRecords = dateRecords.filter(record => record.vehicleNo === vehicleNo);
             }
+            
             if (dateRecords.length === 0) {
                 alert("No records found for the selected criteria.");
                 document.getElementById('transportReportActions').style.display = 'none';
                 return;
             }
+            
             const vehicleData = {};
+            
             dateRecords.forEach(record => {
                 if (!vehicleData[record.vehicleNo]) {
                     vehicleData[record.vehicleNo] = {
@@ -933,6 +969,7 @@
                         transactions: []
                     };
                 }
+                
                 vehicleData[record.vehicleNo].totalTrips += 1;
                 vehicleData[record.vehicleNo].totalNetWt += record.netWt;
                 vehicleData[record.vehicleNo].totalTransportAmount += record.transportAmount;
@@ -945,16 +982,20 @@
                     date: record.date
                 });
             });
+            
             currentTransportReportData = { startDate, endDate, vehicleNo, vehicleData };
             document.getElementById('transportReportActions').style.display = 'block';
+            
             const tableBody = document.getElementById('transportBillTable').querySelector('tbody');
             tableBody.innerHTML = '';
+            
             for (const vehicle in vehicleData) {
                 const row = tableBody.insertRow();
                 row.insertCell(0).textContent = vehicle;
                 row.insertCell(1).textContent = vehicleData[vehicle].totalTrips;
                 row.insertCell(2).textContent = vehicleData[vehicle].totalNetWt.toFixed(2);
                 row.insertCell(3).textContent = vehicleData[vehicle].totalTransportAmount.toFixed(2);
+                
                 const detailsCell = row.insertCell(4);
                 detailsCell.className = 'transaction-details';
                 vehicleData[vehicle].transactions.forEach(tx => {
@@ -962,129 +1003,63 @@
                 });
             }
         }
-        function generatePaymentsFtdReport() {
-            const reportDate = document.getElementById('paymentsFtdReportDate').value;
-            const reportShift = document.getElementById('paymentsFtdReportShift').value;
-            if (!reportDate) {
-                alert("Please select a date for the report.");
-                return;
-            }
-            let dateRecords = reportShift === "ALL" ?
-                allRecords.filter(record => record.date === reportDate) :
-                allRecords.filter(record => record.date === reportDate && record.shift === reportShift);
-            if (dateRecords.length === 0) {
-                alert("No records found for the selected criteria.");
-                document.getElementById('paymentsFtdReportActions').style.display = 'none';
-                return;
-            }
-            const customerData = {};
-            dateRecords.forEach(record => {
-                if (!customerData[record.clientDetails]) {
-                    customerData[record.clientDetails] = {
-                        totalTrips: 0,
-                        totalAmount: 0,
-                        totalCashReceived: 0,
-                        totalAdvanceReceived: 0,
-                        totalCredit: 0,
-                        transactions: []
-                    };
-                }
-                customerData[record.clientDetails].totalTrips += 1;
-                customerData[record.clientDetails].totalAmount += record.totalAmount;
-                customerData[record.clientDetails].totalCashReceived += record.cashReceived;
-                customerData[record.clientDetails].totalAdvanceReceived += record.advanceReceived;
-                customerData[record.clientDetails].totalCredit += record.customerBalance;
-                customerData[record.clientDetails].transactions.push({
-                    weighmentSlipNo: record.weighmentSlipNo,
-                    totalAmount: record.totalAmount,
-                    cashReceived: record.cashReceived,
-                    advanceReceived: record.advanceReceived,
-                    customerBalance: record.customerBalance,
-                    date: record.date
-                });
-            });
-            currentPaymentsFtdReportData = { date: reportDate, shift: reportShift, customerData };
-            document.getElementById('paymentsFtdReportActions').style.display = 'block';
-            let reportHTML = '<table class="table table-bordered">';
-            const formattedDate = formatDate(reportDate);
-            reportHTML += `<tr class="shift-header"><th colspan="6">${reportShift === "ALL" ? "FULL DAY" : reportShift} - Payments FTD Report - ${formattedDate}</th></tr>`;
-            reportHTML += '<tr class="customer-header"><th>Client Details</th><th>Total Trips</th><th>Total Amount (₹)</th><th>Cash Received (₹)</th><th>Advance Received (₹)</th><th>Pending Balance (₹)</th></tr>';
-            let grandTotalTrips = 0, grandTotalAmount = 0, grandTotalCashReceived = 0, grandTotalAdvanceReceived = 0, grandTotalCredit = 0;
-            for (const customer in customerData) {
-                reportHTML += `<tr>
-                    <td style="background-color: #d8bfd8; font-weight: bold;">${customer}</td>
-                    <td class="number-cell">${customerData[customer].totalTrips}</td>
-                    <td class="number-cell">${customerData[customer].totalAmount.toFixed(2)}</td>
-                    <td class="number-cell">${customerData[customer].totalCashReceived.toFixed(2)}</td>
-                    <td class="number-cell">${customerData[customer].totalAdvanceReceived.toFixed(2)}</td>
-                    <td class="number-cell">${customerData[customer].totalCredit.toFixed(2)}</td>
-                </tr>`;
-                reportHTML += `<tr><td colspan="6" class="transaction-details">`;
-                customerData[customer].transactions.forEach(tx => {
-                    reportHTML += `<div class="transaction-row">Slip No: ${tx.weighmentSlipNo}, Total Amount: ${tx.totalAmount.toFixed(2)}, Cash Received: ${tx.cashReceived.toFixed(2)}, Advance Received: ${tx.advanceReceived.toFixed(2)}, Pending Balance: ${tx.customerBalance.toFixed(2)}</div>`;
-                });
-                reportHTML += `</td></tr>`;
-                grandTotalTrips += customerData[customer].totalTrips;
-                grandTotalAmount += customerData[customer].totalAmount;
-                grandTotalCashReceived += customerData[customer].totalCashReceived;
-                grandTotalAdvanceReceived += customerData[customer].totalAdvanceReceived;
-                grandTotalCredit += customerData[customer].totalCredit;
-            }
-            reportHTML += `<tr class="total-header">
-                <td>GRAND TOTAL</td>
-                <td class="number-cell">${grandTotalTrips}</td>
-                <td class="number-cell">${grandTotalAmount.toFixed(2)}</td>
-                <td class="number-cell">${grandTotalCashReceived.toFixed(2)}</td>
-                <td class="number-cell">${grandTotalAdvanceReceived.toFixed(2)}</td>
-                <td class="number-cell">${grandTotalCredit.toFixed(2)}</td>
-            </tr>`;
-            reportHTML += '</table>';
-            document.getElementById('paymentsFtdReportContainer').innerHTML = reportHTML;
-        }
+        
         function downloadDispatchPDF() {
             if (!currentDispatchReportData) {
                 alert("No report data available to download.");
                 return;
             }
+            
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             const { date, shift, customerData, materialTypes } = currentDispatchReportData;
+            
             doc.setFontSize(14);
             doc.text(`${shift === "ALL" ? "FULL DAY" : shift} - Dispatch Vehicle Wise Planning - ${formatDate(date)}`, 14, 20);
+            
             const tableData = [];
+            
             for (const customer in customerData) {
                 const tonnageRow = [customer, 'Total Tonnage (MT)'];
                 const tripsRow = ['', 'Total Trips'];
+                
                 materialTypes.forEach(material => {
                     const tonnage = customerData[customer].materials[material].tonnage;
                     const trips = customerData[customer].materials[material].trips;
                     tonnageRow.push(tonnage > 0 ? tonnage.toFixed(2) : '');
                     tripsRow.push(trips > 0 ? trips : '');
                 });
+                
                 tonnageRow.push(customerData[customer].totalTonnage.toFixed(2));
                 tripsRow.push(customerData[customer].totalTrips);
                 tableData.push(tonnageRow, tripsRow);
             }
+            
             const totalTonnageRow = ['GRAND TOTAL', 'Total Tonnage (MT)'];
             const totalTripsRow = ['', 'Total Trips'];
+            
             const materialTotals = {};
             materialTypes.forEach(material => materialTotals[material] = { tonnage: 0, trips: 0 });
+            
+            let grandTotalTonnage = 0, grandTotalTrips = 0;
             for (const customer in customerData) {
                 materialTypes.forEach(material => {
                     materialTotals[material].tonnage += customerData[customer].materials[material].tonnage;
                     materialTotals[material].trips += customerData[customer].materials[material].trips;
                 });
+                grandTotalTonnage += customerData[customer].totalTonnage;
+                grandTotalTrips += customerData[customer].totalTrips;
             }
-            let grandTotalTonnage = 0, grandTotalTrips = 0;
+            
             materialTypes.forEach(material => {
                 totalTonnageRow.push(materialTotals[material].tonnage > 0 ? materialTotals[material].tonnage.toFixed(2) : '');
                 totalTripsRow.push(materialTotals[material].trips > 0 ? materialTotals[material].trips : '');
-                grandTotalTonnage += materialTotals[material].tonnage;
-                grandTotalTrips += materialTotals[material].trips;
             });
+            
             totalTonnageRow.push(grandTotalTonnage.toFixed(2));
             totalTripsRow.push(grandTotalTrips);
             tableData.push(totalTonnageRow, totalTripsRow);
+            
             doc.autoTable({
                 head: [['Client Details', 'Unit', ...materialTypes, 'TOTAL']],
                 body: tableData,
@@ -1093,25 +1068,33 @@
                 headStyles: { fillColor: [44, 62, 80] },
                 alternateRowStyles: { fillColor: [240, 240, 240] }
             });
+            
             doc.save(`Dispatch_Report_${date}_${shift}.pdf`);
         }
+        
         function downloadFtdPDF() {
             if (!currentFtdReportData) {
                 alert("No report data available to download.");
                 return;
             }
+            
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             const { date, shift, vehicleData } = currentFtdReportData;
+            
             doc.setFontSize(14);
             doc.text(`${shift === "ALL" ? "FULL DAY" : shift} - FTD Report - ${formatDate(date)}`, 14, 20);
+            
             const tableData = [];
+            
             for (const vehicle in vehicleData) {
                 const transactions = vehicleData[vehicle].transactions.map(tx =>
                     `Slip No: ${tx.weighmentSlipNo}, Client: ${tx.clientDetails}, Material: ${tx.materialType}, Net WT: ${tx.netWt.toFixed(2)}`
                 ).join('\n');
+                
                 tableData.push([vehicle, vehicleData[vehicle].totalTrips, vehicleData[vehicle].totalNetWt.toFixed(2), transactions]);
             }
+            
             doc.autoTable({
                 head: [['Vehicle No', 'Total Trips', 'Total NET WT (MT)', 'Transaction Details']],
                 body: tableData,
@@ -1120,25 +1103,33 @@
                 headStyles: { fillColor: [44, 62, 80] },
                 alternateRowStyles: { fillColor: [240, 240, 240] }
             });
+            
             doc.save(`FTD_Report_${date}_${shift}.pdf`);
         }
+        
         function downloadTransportPDF() {
             if (!currentTransportReportData) {
                 alert("No report data available to download.");
                 return;
             }
+            
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             const { startDate, endDate, vehicleNo, vehicleData } = currentTransportReportData;
+            
             doc.setFontSize(14);
             doc.text(`Transport Bill Report - ${formatDate(startDate)} to ${formatDate(endDate)}${vehicleNo ? ` - Vehicle: ${vehicleNo}` : ''}`, 14, 20);
+            
             const tableData = [];
+            
             for (const vehicle in vehicleData) {
                 const transactions = vehicleData[vehicle].transactions.map(tx =>
                     `Slip No: ${tx.weighmentSlipNo}, Client: ${tx.clientDetails}, Material: ${tx.materialType}, Net WT: ${tx.netWt.toFixed(2)}, Transport Amount: ${tx.transportAmount.toFixed(2)}`
                 ).join('\n');
+                
                 tableData.push([vehicle, vehicleData[vehicle].totalTrips, vehicleData[vehicle].totalNetWt.toFixed(2), vehicleData[vehicle].totalTransportAmount.toFixed(2), transactions]);
             }
+            
             doc.autoTable({
                 head: [['Vehicle No', 'Total Trips', 'Total NET WT (MT)', 'Total Transport Amount', 'Transaction Details']],
                 body: tableData,
@@ -1147,52 +1138,10 @@
                 headStyles: { fillColor: [44, 62, 80] },
                 alternateRowStyles: { fillColor: [240, 240, 240] }
             });
+            
             doc.save(`Transport_Bill_${startDate}_to_${endDate}${vehicleNo ? `_${vehicleNo}` : ''}.pdf`);
         }
-        function downloadPaymentsFtdPDF() {
-            if (!currentPaymentsFtdReportData) {
-                alert("No report data available to download.");
-                return;
-            }
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            const { date, shift, customerData } = currentPaymentsFtdReportData;
-            doc.setFontSize(14);
-            doc.text(`${shift === "ALL" ? "FULL DAY" : shift} - Payments FTD Report - ${formatDate(date)}`, 14, 20);
-            const tableData = [];
-            for (const customer in customerData) {
-                const transactions = customerData[customer].transactions.map(tx =>
-                    `Slip No: ${tx.weighmentSlipNo}, Total Amount: ${tx.totalAmount.toFixed(2)}, Cash Received: ${tx.cashReceived.toFixed(2)}, Advance Received: ${tx.advanceReceived.toFixed(2)}, Pending Balance: ${tx.customerBalance.toFixed(2)}`
-                ).join('\n');
-                tableData.push([
-                    customer,
-                    customerData[customer].totalTrips.toString(),
-                    customerData[customer].totalAmount.toFixed(2),
-                    customerData[customer].totalCashReceived.toFixed(2),
-                    customerData[customer].totalAdvanceReceived.toFixed(2),
-                    customerData[customer].totalCredit.toFixed(2),
-                    transactions
-                ]);
-            }
-            tableData.push([
-                'GRAND TOTAL',
-                Object.values(customerData).reduce((sum, data) => sum + data.totalTrips, 0).toString(),
-                Object.values(customerData).reduce((sum, data) => sum + data.totalAmount, 0).toFixed(2),
-                Object.values(customerData).reduce((sum, data) => sum + data.totalCashReceived, 0).toFixed(2),
-                Object.values(customerData).reduce((sum, data) => sum + data.totalAdvanceReceived, 0).toFixed(2),
-                Object.values(customerData).reduce((sum, data) => sum + data.totalCredit, 0).toFixed(2),
-                ''
-            ]);
-            doc.autoTable({
-                head: [['Client Details', 'Total Trips', 'Total Amount (₹)', 'Cash Received (₹)', 'Advance Received (₹)', 'Pending Balance (₹)', 'Transaction Details']],
-                body: tableData,
-                startY: 30,
-                styles: { fontSize: 8 },
-                headStyles: { fillColor: [44, 62, 80] },
-                alternateRowStyles: { fillColor: [240, 240, 240] }
-            });
-            doc.save(`Payments_FTD_Report_${date}_${shift}.pdf`);
-        }
+        
         function exportToExcel() {
             const ws = XLSX.utils.json_to_sheet(allRecords.map(record => ({
                 'S.No': allRecords.indexOf(record) + 1,
@@ -1221,6 +1170,7 @@
                 'Transport Amount': record.transportAmount.toFixed(2),
                 'Total Amount': record.totalAmount.toFixed(2)
             })));
+            
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, 'Records');
             XLSX.writeFile(wb, 'Weighbridge_Records.xlsx');
