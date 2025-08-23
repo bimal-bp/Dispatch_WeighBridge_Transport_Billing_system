@@ -415,6 +415,7 @@
                         <th>S.NO</th>
                         <th>Accounting Date</th>
                         <th>Date</th>
+                        <th>Shift</th>
                         <th>Weighment Slip No</th>
                         <th>DC No</th>
                         <th>Royalty Permit No</th>
@@ -443,7 +444,7 @@
                 </thead>
                 <tbody id="recordsTable">
                     <tr>
-                        <td colspan="27" class="text-center">No records found</td>
+                        <td colspan="28" class="text-center">No records found</td>
                     </tr>
                 </tbody>
             </table>
@@ -489,9 +490,9 @@
             <div class="col-md-3">
                 <label for="ftdReportShift" class="form-label">Select Shift</label>
                 <select class="form-select" id="ftdReportShift">
-                    <option value="DAY">DAY</option>
-                    <option value="NIGHT">NIGHT</option>
-                    <option value="FULL DAY">FULL DAY</option>
+                    <option value="A-SHIFT">A-SHIFT (Day)</option>
+                    <option value="B-SHIFT">B-SHIFT (Night)</option>
+                    <option value="ALL">FULL DAY</option>
                 </select>
             </div>
             <div class="col-md-2">
@@ -897,7 +898,7 @@
                 const row = tableBody.insertRow();
                 const cell = row.insertCell(0);
                 cell.textContent = 'No records found';
-                cell.colSpan = 27;
+                cell.colSpan = 28;
                 cell.className = 'text-center';
                 return;
             }
@@ -907,31 +908,32 @@
                 row.insertCell(0).textContent = index + 1;
                 row.insertCell(1).textContent = record.accountingDate;
                 row.insertCell(2).textContent = record.date;
-                row.insertCell(3).textContent = record.weighmentSlipNo;
-                row.insertCell(4).textContent = record.deliveryChallanNo;
-                row.insertCell(5).textContent = record.royaltyPermitNo;
-                row.insertCell(6).textContent = record.permitQty.toFixed(2);
-                row.insertCell(7).textContent = record.clientDetails;
-                row.insertCell(8).textContent = record.paymentMode;
-                row.insertCell(9).textContent = record.transportType;
-                row.insertCell(10).textContent = record.vehicleNo;
-                row.insertCell(11).textContent = record.materialType;
-                row.insertCell(12).textContent = record.grossWt.toFixed(2);
-                row.insertCell(13).textContent = record.tareWt.toFixed(2);
-                row.insertCell(14).textContent = record.netWt.toFixed(2);
-                row.insertCell(15).textContent = record.ratePerTone.toFixed(2);
-                row.insertCell(16).textContent = record.saleAmount.toFixed(2);
-                row.insertCell(17).textContent = record.cashReceived.toFixed(2);
-                row.insertCell(18).textContent = record.advanceReceived.toFixed(2);
-                row.insertCell(19).textContent = record.customerBalance.toFixed(2);
-                row.insertCell(20).textContent = record.remarks;
-                row.insertCell(21).textContent = record.royaltyRate.toFixed(2);
-                row.insertCell(22).textContent = record.royaltyAmount.toFixed(2);
-                row.insertCell(23).textContent = record.transportRate.toFixed(2);
-                row.insertCell(24).textContent = record.transportAmount.toFixed(2);
-                row.insertCell(25).textContent = record.totalAmount.toFixed(2);
+                row.insertCell(3).textContent = record.shift;
+                row.insertCell(4).textContent = record.weighmentSlipNo;
+                row.insertCell(5).textContent = record.deliveryChallanNo;
+                row.insertCell(6).textContent = record.royaltyPermitNo;
+                row.insertCell(7).textContent = record.permitQty.toFixed(2);
+                row.insertCell(8).textContent = record.clientDetails;
+                row.insertCell(9).textContent = record.paymentMode;
+                row.insertCell(10).textContent = record.transportType;
+                row.insertCell(11).textContent = record.vehicleNo;
+                row.insertCell(12).textContent = record.materialType;
+                row.insertCell(13).textContent = record.grossWt.toFixed(2);
+                row.insertCell(14).textContent = record.tareWt.toFixed(2);
+                row.insertCell(15).textContent = record.netWt.toFixed(2);
+                row.insertCell(16).textContent = record.ratePerTone.toFixed(2);
+                row.insertCell(17).textContent = record.saleAmount.toFixed(2);
+                row.insertCell(18).textContent = record.cashReceived.toFixed(2);
+                row.insertCell(19).textContent = record.advanceReceived.toFixed(2);
+                row.insertCell(20).textContent = record.customerBalance.toFixed(2);
+                row.insertCell(21).textContent = record.remarks;
+                row.insertCell(22).textContent = record.royaltyRate.toFixed(2);
+                row.insertCell(23).textContent = record.royaltyAmount.toFixed(2);
+                row.insertCell(24).textContent = record.transportRate.toFixed(2);
+                row.insertCell(25).textContent = record.transportAmount.toFixed(2);
+                row.insertCell(26).textContent = record.totalAmount.toFixed(2);
                 
-                const actionsCell = row.insertCell(26);
+                const actionsCell = row.insertCell(27);
                 actionsCell.innerHTML = '<button class="btn btn-sm btn-info me-1">View</button><button class="btn btn-sm btn-danger">Delete</button>';
                 actionsCell.querySelector('.btn-danger').addEventListener('click', function() {
                     allRecords = allRecords.filter(r => r.id !== record.id);
@@ -1067,11 +1069,11 @@
             
             // Filter records based on selected shift
             let filteredRecords = [];
-            if (reportShift === "DAY") {
+            if (reportShift === "A-SHIFT") {
                 filteredRecords = dayRecords;
-            } else if (reportShift === "NIGHT") {
+            } else if (reportShift === "B-SHIFT") {
                 filteredRecords = nightRecords;
-            } else if (reportShift === "FULL DAY") {
+            } else if (reportShift === "ALL") {
                 filteredRecords = dateRecords;
             }
             
@@ -1193,7 +1195,7 @@
             });
             
             // Generate report based on selected shift
-            if (reportShift === "DAY" || reportShift === "FULL DAY") {
+            if (reportShift === "A-SHIFT" || reportShift === "ALL") {
                 reportHTML += `<div class="section-header">A-SHIFT (Day Shift) – Dispatch Vehicle Wise Planning</div>`;
                 reportHTML += `<table class="ftd-report-table">`;
                 reportHTML += `<thead><tr><th>Customer Name</th>`;
@@ -1204,7 +1206,7 @@
                 for (const customer in customerData) {
                     // Only show customers with day shift records
                     const hasDayRecords = dayRecords.some(record => record.clientDetails === customer);
-                    if (hasDayRecords || reportShift === "FULL DAY") {
+                    if (hasDayRecords || reportShift === "ALL") {
                         reportHTML += `<tr class="ftd-customer-row"><td>${customer}</td>`;
                         materialTypes.forEach(material => {
                             const tonnage = customerData[customer].materials[material].tonnage;
@@ -1215,7 +1217,7 @@
                 }
                 
                 // Add day shift totals
-                if (reportShift === "DAY") {
+                if (reportShift === "A-SHIFT") {
                     reportHTML += `<tr class="ftd-total-row"><td>Total No of Vehicles: ${dayTotalTrips}</td>`;
                     materialTypes.forEach(material => {
                         reportHTML += `<td>${dayMaterialTotals[material]?.tonnage > 0 ? dayMaterialTotals[material].tonnage.toFixed(2) : ''}</td>`;
@@ -1225,7 +1227,7 @@
                 reportHTML += `</tbody></table>`;
             }
             
-            if (reportShift === "NIGHT" || reportShift === "FULL DAY") {
+            if (reportShift === "B-SHIFT" || reportShift === "ALL") {
                 reportHTML += `<div class="section-header">B-SHIFT (Night Shift) – Dispatch Vehicle Wise Planning</div>`;
                 reportHTML += `<table class="ftd-report-table">`;
                 reportHTML += `<thead><tr><th>Customer Name</th>`;
@@ -1236,7 +1238,7 @@
                 for (const customer in customerData) {
                     // Only show customers with night shift records
                     const hasNightRecords = nightRecords.some(record => record.clientDetails === customer);
-                    if (hasNightRecords || reportShift === "FULL DAY") {
+                    if (hasNightRecords || reportShift === "ALL") {
                         reportHTML += `<tr class="ftd-customer-row"><td>${customer}</td>`;
                         materialTypes.forEach(material => {
                             const tonnage = customerData[customer].materials[material].tonnage;
@@ -1247,7 +1249,7 @@
                 }
                 
                 // Add night shift totals
-                if (reportShift === "NIGHT") {
+                if (reportShift === "B-SHIFT") {
                     reportHTML += `<tr class="ftd-total-row"><td>Total No of Vehicles: ${nightTotalTrips}</td>`;
                     materialTypes.forEach(material => {
                         reportHTML += `<td>${nightMaterialTotals[material]?.tonnage > 0 ? nightMaterialTotals[material].tonnage.toFixed(2) : ''}</td>`;
@@ -1258,7 +1260,7 @@
             }
             
             // Add summary table for FULL DAY report
-            if (reportShift === "FULL DAY") {
+            if (reportShift === "ALL") {
                 reportHTML += `<div class="section-header">Summary</div>`;
                 reportHTML += `<table class="ftd-summary-table">`;
                 reportHTML += `<thead><tr><th>Shift</th><th>No of Vehicles</th>`;
@@ -1470,7 +1472,7 @@
             doc.text(`FTD Report - ${shift} - ${formatDate(date)}`, 14, 20);
             
             // Add content based on shift selection
-            if (shift === "DAY" || shift === "FULL DAY") {
+            if (shift === "A-SHIFT" || shift === "ALL") {
                 doc.text("A-SHIFT (Day Shift) – Dispatch Vehicle Wise Planning", 14, 30);
                 
                 const dayTableData = [];
@@ -1496,9 +1498,9 @@
                 });
             }
             
-            if (shift === "NIGHT" || shift === "FULL DAY") {
-                const startY = shift === "FULL DAY" ? doc.lastAutoTable.finalY + 20 : 40;
-                if (shift === "FULL DAY") {
+            if (shift === "B-SHIFT" || shift === "ALL") {
+                const startY = shift === "ALL" ? doc.lastAutoTable.finalY + 20 : 40;
+                if (shift === "ALL") {
                     doc.addPage();
                 }
                 
@@ -1683,7 +1685,7 @@
             });
             
             // Add day shift data if applicable
-            if (shift === "DAY" || shift === "FULL DAY") {
+            if (shift === "A-SHIFT" || shift === "ALL") {
                 excelData.push(['A-SHIFT (Day Shift) – Dispatch Vehicle Wise Planning']);
                 excelData.push([]);
                 
@@ -1707,7 +1709,7 @@
                 }
                 
                 // Add day shift totals
-                if (shift === "DAY") {
+                if (shift === "A-SHIFT") {
                     const totalRow = [`Total No of Vehicles: ${dayTotalTrips}`];
                     materialTypes.forEach(material => {
                         totalRow.push(dayMaterialTotals[material]?.tonnage > 0 ? dayMaterialTotals[material].tonnage.toFixed(2) : '');
@@ -1720,7 +1722,7 @@
             }
             
             // Add night shift data if applicable
-            if (shift === "NIGHT" || shift === "FULL DAY") {
+            if (shift === "B-SHIFT" || shift === "ALL") {
                 excelData.push(['B-SHIFT (Night Shift) – Dispatch Vehicle Wise Planning']);
                 excelData.push([]);
                 
@@ -1744,7 +1746,7 @@
                 }
                 
                 // Add night shift totals
-                if (shift === "NIGHT") {
+                if (shift === "B-SHIFT") {
                     const totalRow = [`Total No of Vehicles: ${nightTotalTrips}`];
                     materialTypes.forEach(material => {
                         totalRow.push(nightMaterialTotals[material]?.tonnage > 0 ? nightMaterialTotals[material].tonnage.toFixed(2) : '');
@@ -1757,7 +1759,7 @@
             }
             
             // Add summary for FULL DAY report
-            if (shift === "FULL DAY") {
+            if (shift === "ALL") {
                 excelData.push(['Summary']);
                 excelData.push([]);
                 
@@ -1871,6 +1873,7 @@
                 'S.No': allRecords.indexOf(record) + 1,
                 'Accounting Date': record.accountingDate,
                 'Date': record.date,
+                'Shift': record.shift,
                 'Weighment Slip No': record.weighmentSlipNo,
                 'DC No': record.deliveryChallanNo,
                 'Royalty Permit No': record.royaltyPermitNo,
