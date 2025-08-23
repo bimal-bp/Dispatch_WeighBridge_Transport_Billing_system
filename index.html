@@ -204,6 +204,24 @@
         .transaction-point {
             padding: 3px 0;
         }
+        .client-bill-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        .client-bill-table th, .client-bill-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        .client-bill-table th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        .client-bill-total {
+            background-color: #d4edda;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -491,7 +509,7 @@
                 <label for="ftdReportShift" class="form-label">Select Shift</label>
                 <select class="form-select" id="ftdReportShift">
                     <option value="A-SHIFT">A-SHIFT (Day)</option>
-
+                    <option value="B-SHIFT">B-SHIFT (Night)</option>
                     <option value="ALL">FULL DAY</option>
                 </select>
             </div>
@@ -551,6 +569,52 @@
                     </tr>
                 </tbody>
             </table>
+        </div>
+        <!-- Client Wise Dispatch Bill Report -->
+        <div class="section-header">Client Wise Dispatch Bill Report</div>
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <label for="clientBillMonth" class="form-label">Select Month</label>
+                <input type="month" class="form-control" id="clientBillMonth">
+            </div>
+            <div class="col-md-3">
+                <label for="clientBillClient" class="form-label">Client (Optional)</label>
+                <select class="form-select" id="clientBillClient">
+                    <option value="">All Clients</option>
+                    <option value="L & T P1 – Rambali">L & T P1 – Rambali</option>
+                    <option value="L & T P2 – Rambali">L & T P2 – Rambali</option>
+                    <option value="KEC – Rambali">KEC – Rambali</option>
+                    <option value="JS Mining – Rambali">JS Mining – Rambali</option>
+                    <option value="ITD – Rambali">ITD – Rambali</option>
+                    <option value="Sowaparnika – Rambali">Sowaparnika – Rambali</option>
+                    <option value="L & T Jio – Sindhiya">L & T Jio – Sindhiya</option>
+                    <option value="Arabind – Shela Nagar">Arabind – Shela Nagar</option>
+                    <option value="RKD – Shela Nagar">RKD – Shela Nagar</option>
+                    <option value="Afcyan – Shela Ngr">Afcyan – Shela Ngr</option>
+                    <option value="Bharath Verma – Airport">Bharath Verma – Airport</option>
+                    <option value="Aparna RMC – Gajuwaka">Aparna RMC – Gajuwaka</option>
+                    <option value="ACC RMC – Gajuwaka">ACC RMC – Gajuwaka</option>
+                    <option value="Prisam RMC – Gajuwaka">Prisam RMC – Gajuwaka</option>
+                    <option value="Nuvoco RMC – Gajuwaka">Nuvoco RMC – Gajuwaka</option>
+                    <option value="Ultratech – Mindi">Ultratech – Mindi</option>
+                    <option value="MK Builders – Madhurwada">MK Builders – Madhurwada</option>
+                    <option value="North Star Homes – Madhurwada">North Star Homes – Madhurwada</option>
+                    <option value="Coastal RMC – Madhurwada">Coastal RMC – Madhurwada</option>
+                    <option value="Coastal RMC – Achututapuram">Coastal RMC – Achututapuram</option>
+                    <option value="Vizag Port – Vizag Port">Vizag Port – Vizag Port</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">&nbsp;</label>
+                <button type="button" class="btn btn-primary form-control" id="btnClientBill">Generate Client Bill</button>
+            </div>
+        </div>
+        <div class="report-actions" id="clientBillActions" style="display: none;">
+            <button type="button" class="btn btn-success" id="btnDownloadClientPDF">Download PDF Report</button>
+            <button type="button" class="btn btn-primary" id="btnDownloadClientExcel">Download Excel Report</button>
+        </div>
+        <div class="table-responsive">
+            <div id="clientBillContainer"></div>
         </div>
     </div>
     <!-- Add Vehicle Modal -->
@@ -619,6 +683,7 @@
         let currentDispatchReportData = null;
         let currentFtdReportData = null;
         let currentTransportReportData = null;
+        let currentClientBillData = null;
         
         // Load data from localStorage when page loads
         document.addEventListener('DOMContentLoaded', function() {
@@ -642,6 +707,15 @@
                 clientDropdown.appendChild(option);
             });
             
+            // Initialize client bill client dropdown
+            const clientBillClient = document.getElementById('clientBillClient');
+            clientNames.forEach(client => {
+                const option = document.createElement('option');
+                option.value = client;
+                option.textContent = client;
+                clientBillClient.appendChild(option);
+            });
+            
             // Set default dates to today
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('accountingDate').value = today;
@@ -650,6 +724,10 @@
             document.getElementById('ftdReportDate').value = today;
             document.getElementById('transportBillStartDate').value = today;
             document.getElementById('transportBillEndDate').value = today;
+            
+            // Set default month to current month
+            const currentMonth = new Date().toISOString().slice(0, 7);
+            document.getElementById('clientBillMonth').value = currentMonth;
             
             // Event listeners for calculations
             document.getElementById('grossWt').addEventListener('input', calculateValues);
@@ -721,6 +799,13 @@
                     clientDropdown.appendChild(option);
                     clientDropdown.value = newClientName;
                     document.getElementById('clientDetails').value = newClientName;
+                    
+                    // Also add to client bill dropdown
+                    const billOption = document.createElement('option');
+                    billOption.value = newClientName;
+                    billOption.textContent = newClientName;
+                    document.getElementById('clientBillClient').appendChild(billOption);
+                    
                     const modal = bootstrap.Modal.getInstance(document.getElementById('addClientModal'));
                     modal.hide();
                     document.getElementById('newClientName').value = '';
@@ -738,16 +823,19 @@
             document.getElementById('btnDispatchReport').addEventListener('click', generateDispatchReport);
             document.getElementById('btnFtdReport').addEventListener('click', generateFtdReport);
             document.getElementById('btnTransportBill').addEventListener('click', generateTransportBill);
+            document.getElementById('btnClientBill').addEventListener('click', generateClientBill);
             
             // PDF download buttons
             document.getElementById('btnDownloadDispatchPDF').addEventListener('click', downloadDispatchPDF);
             document.getElementById('btnDownloadFtdPDF').addEventListener('click', downloadFtdPDF);
             document.getElementById('btnDownloadTransportPDF').addEventListener('click', downloadTransportPDF);
+            document.getElementById('btnDownloadClientPDF').addEventListener('click', downloadClientPDF);
             
             // Excel download buttons
             document.getElementById('btnDownloadDispatchExcel').addEventListener('click', downloadDispatchExcel);
             document.getElementById('btnDownloadFtdExcel').addEventListener('click', downloadFtdExcel);
             document.getElementById('btnDownloadTransportExcel').addEventListener('click', downloadTransportExcel);
+            document.getElementById('btnDownloadClientExcel').addEventListener('click', downloadClientExcel);
             
             // Form submission
             document.getElementById('weighmentForm').addEventListener('submit', function(e) {
@@ -1035,7 +1123,7 @@
             });
             reportHTML += `<td class="number-cell">${grandTotalTonnage.toFixed(2)}</td></tr>`;
             
-            reportHTML += `<tr class="total-header"><td colspan="2">TOTAL TRIPS</td>`;
+            reportHTML += `<tr class('total-header')><td colspan="2">TOTAL TRIPS</td>`;
             materialTypes.forEach(material => {
                 reportHTML += `<td class="number-cell">${materialTotals[material].trips > 0 ? materialTotals[material].trips : ''}</td>`;
             });
@@ -1390,6 +1478,136 @@
             }
         }
         
+        function generateClientBill() {
+            const month = document.getElementById('clientBillMonth').value;
+            const client = document.getElementById('clientBillClient').value;
+            
+            if (!month) {
+                alert("Please select a month for the report.");
+                return;
+            }
+            
+            // Get start and end dates for the selected month
+            const startDate = month + '-01';
+            const endDate = new Date(new Date(month + '-01').getFullYear(), new Date(month + '-01').getMonth() + 1, 0).toISOString().split('T')[0];
+            
+            // Get records for the selected month
+            let monthRecords = allRecords.filter(record => record.date >= startDate && record.date <= endDate);
+            
+            // Filter by client if specified
+            if (client) {
+                monthRecords = monthRecords.filter(record => record.clientDetails === client);
+            }
+            
+            if (monthRecords.length === 0) {
+                alert("No records found for the selected criteria.");
+                document.getElementById('clientBillActions').style.display = 'none';
+                return;
+            }
+            
+            // Group by client and material
+            const clientData = {};
+            const materialTypes = ["10 MM", "20 MM", "V/SAND", "Scalping", "P/Sand", "40MM", "GSB/WET MIX", "R/Sand"];
+            
+            monthRecords.forEach(record => {
+                if (!clientData[record.clientDetails]) {
+                    clientData[record.clientDetails] = {
+                        totalTonnage: 0,
+                        totalAmount: 0,
+                        materials: {},
+                        transactions: []
+                    };
+                    
+                    materialTypes.forEach(material => {
+                        clientData[record.clientDetails].materials[material] = { tonnage: 0, amount: 0 };
+                    });
+                }
+                
+                clientData[record.clientDetails].totalTonnage += record.netWt;
+                clientData[record.clientDetails].totalAmount += record.saleAmount;
+                
+                if (clientData[record.clientDetails].materials[record.materialType]) {
+                    clientData[record.clientDetails].materials[record.materialType].tonnage += record.netWt;
+                    clientData[record.clientDetails].materials[record.materialType].amount += record.saleAmount;
+                }
+                
+                // Add transaction details
+                clientData[record.clientDetails].transactions.push({
+                    date: record.date,
+                    weighmentSlipNo: record.weighmentSlipNo,
+                    material: record.materialType,
+                    netWt: record.netWt,
+                    rate: record.ratePerTone,
+                    amount: record.saleAmount
+                });
+            });
+            
+            currentClientBillData = { month, client, clientData, materialTypes };
+            document.getElementById('clientBillActions').style.display = 'block';
+            
+            let reportHTML = '';
+            const monthName = new Date(month + '-01').toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+            
+            reportHTML += `<div class="section-header">Client Wise Dispatch Bill - ${monthName}${client ? ` - ${client}` : ''}</div>`;
+            reportHTML += `<table class="client-bill-table">`;
+            reportHTML += `<thead><tr><th>Client Name</th>`;
+            materialTypes.forEach(material => reportHTML += `<th>${material}</th>`);
+            reportHTML += `<th>Total Tonnage</th><th>Total Amount</th></tr></thead><tbody>`;
+            
+            let grandTotalTonnage = 0;
+            let grandTotalAmount = 0;
+            const materialTotals = {};
+            materialTypes.forEach(material => materialTotals[material] = { tonnage: 0, amount: 0 });
+            
+            for (const clientName in clientData) {
+                reportHTML += `<tr><td>${clientName}</td>`;
+                
+                materialTypes.forEach(material => {
+                    const tonnage = clientData[clientName].materials[material].tonnage;
+                    reportHTML += `<td>${tonnage > 0 ? tonnage.toFixed(2) : ''}</td>`;
+                    materialTotals[material].tonnage += tonnage;
+                });
+                
+                reportHTML += `<td>${clientData[clientName].totalTonnage.toFixed(2)}</td>`;
+                reportHTML += `<td>${clientData[clientName].totalAmount.toFixed(2)}</td></tr>`;
+                
+                grandTotalTonnage += clientData[clientName].totalTonnage;
+                grandTotalAmount += clientData[clientName].totalAmount;
+            }
+            
+            // Add totals row
+            reportHTML += `<tr class="client-bill-total"><td>Total</td>`;
+            materialTypes.forEach(material => {
+                reportHTML += `<td>${materialTotals[material].tonnage > 0 ? materialTotals[material].tonnage.toFixed(2) : ''}</td>`;
+            });
+            reportHTML += `<td>${grandTotalTonnage.toFixed(2)}</td>`;
+            reportHTML += `<td>${grandTotalAmount.toFixed(2)}</td></tr>`;
+            
+            reportHTML += `</tbody></table>`;
+            
+            // Add transaction details
+            reportHTML += `<div class="section-header">Transaction Details</div>`;
+            reportHTML += `<div class="transaction-details">`;
+            
+            for (const clientName in clientData) {
+                reportHTML += `<h5>${clientName}</h5>`;
+                reportHTML += `<div class="transaction-points">`;
+                
+                let transactionCounter = 1;
+                clientData[clientName].transactions.forEach(tx => {
+                    reportHTML += `<div class="transaction-point">`;
+                    reportHTML += `${transactionCounter++}. Date: ${formatDate(tx.date)}, Slip No: ${tx.weighmentSlipNo}, Material: ${tx.material}, Net WT: ${tx.netWt.toFixed(2)} MT, Rate: ${tx.rate.toFixed(2)}, Amount: ${tx.amount.toFixed(2)}`;
+                    reportHTML += `</div>`;
+                });
+                
+                reportHTML += `</div>`;
+            }
+            
+            reportHTML += `</div>`;
+            
+            document.getElementById('clientBillContainer').innerHTML = reportHTML;
+        }
+        
         function downloadDispatchPDF() {
             if (!currentDispatchReportData) {
                 alert("No report data available to download.");
@@ -1565,6 +1783,46 @@
             });
             
             doc.save(`Transport_Bill_${startDate}_to_${endDate}${vehicleNo ? `_${vehicleNo}` : ''}.pdf`);
+        }
+        
+        function downloadClientPDF() {
+            if (!currentClientBillData) {
+                alert("No report data available to download.");
+                return;
+            }
+            
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const { month, client, clientData, materialTypes } = currentClientBillData;
+            
+            const monthName = new Date(month + '-01').toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+            doc.setFontSize(14);
+            doc.text(`Client Wise Dispatch Bill - ${monthName}${client ? ` - ${client}` : ''}`, 14, 20);
+            
+            const tableData = [];
+            
+            for (const clientName in clientData) {
+                const row = [clientName];
+                
+                materialTypes.forEach(material => {
+                    row.push(clientData[clientName].materials[material].tonnage > 0 ? clientData[clientName].materials[material].tonnage.toFixed(2) : '');
+                });
+                
+                row.push(clientData[clientName].totalTonnage.toFixed(2));
+                row.push(clientData[clientName].totalAmount.toFixed(2));
+                tableData.push(row);
+            }
+            
+            doc.autoTable({
+                head: [['Client Name', ...materialTypes, 'Total Tonnage', 'Total Amount']],
+                body: tableData,
+                startY: 30,
+                styles: { fontSize: 8 },
+                headStyles: { fillColor: [44, 62, 80] },
+                alternateRowStyles: { fillColor: [240, 240, 240] }
+            });
+            
+            doc.save(`Client_Bill_${month}${client ? `_${client.replace(/\s+/g, '_')}` : ''}.pdf`);
         }
         
         function downloadDispatchExcel() {
@@ -1866,6 +2124,48 @@
             
             // Save file
             XLSX.writeFile(wb, `Transport_Bill_${startDate}_to_${endDate}${vehicleNo ? `_${vehicleNo}` : ''}.xlsx`);
+        }
+        
+        function downloadClientExcel() {
+            if (!currentClientBillData) {
+                alert("No report data available to download.");
+                return;
+            }
+            
+            const { month, client, clientData, materialTypes } = currentClientBillData;
+            
+            const excelData = [];
+            const monthName = new Date(month + '-01').toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+            excelData.push([`Client Wise Dispatch Bill - ${monthName}${client ? ` - ${client}` : ''}`]);
+            excelData.push([]);
+            
+            // Create header row
+            const headerRow = ['Client Name'];
+            materialTypes.forEach(material => headerRow.push(material));
+            headerRow.push('Total Tonnage');
+            headerRow.push('Total Amount');
+            excelData.push(headerRow);
+            
+            // Add client data
+            for (const clientName in clientData) {
+                const row = [clientName];
+                
+                materialTypes.forEach(material => {
+                    row.push(clientData[clientName].materials[material].tonnage > 0 ? clientData[clientName].materials[material].tonnage.toFixed(2) : '');
+                });
+                
+                row.push(clientData[clientName].totalTonnage.toFixed(2));
+                row.push(clientData[clientName].totalAmount.toFixed(2));
+                excelData.push(row);
+            }
+            
+            // Create worksheet
+            const ws = XLSX.utils.aoa_to_sheet(excelData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Client Bill');
+            
+            // Save file
+            XLSX.writeFile(wb, `Client_Bill_${month}${client ? `_${client.replace(/\s+/g, '_')}` : ''}.xlsx`);
         }
         
         function exportToExcel() {
