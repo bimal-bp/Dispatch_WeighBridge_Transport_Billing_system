@@ -352,7 +352,7 @@
                     <input type="number" class="form-control" id="grossWt" step="0.01">
                 </div>
                 <div class="col-md-3">
-                    <label for="tareWt" class="form-label">Tare WT</label>
+                    <label for 'tareWt' class="form-label">Tare WT</label>
                     <input type="number" class="form-control" id="tareWt" step="0.01">
                 </div>
                 <div class="col-md-3">
@@ -894,7 +894,7 @@
                 return;
             }
             
-            allRecords.forEach((record, index) {
+            allRecords.forEach((record, index) => {
                 const row = tableBody.insertRow();
                 row.insertCell(0).textContent = index + 1;
                 row.insertCell(1).textContent = record.accountingDate;
