@@ -352,7 +352,7 @@
                     <input type="number" class="form-control" id="grossWt" step="0.01">
                 </div>
                 <div class="col-md-3">
-                    <label for="tareWt" class="form-label">Tare WT</label>
+                    <label for 'tareWt' class="form-label">Tare WT</label>
                     <input type="number" class="form-control" id="tareWt" step="0.01">
                 </div>
                 <div class="col-md-3">
@@ -1035,282 +1035,281 @@
             document.getElementById('dispatchReportContainer').innerHTML = reportHTML;
         }
         
-function generateFtdReport() {
-    const reportDate = document.getElementById('ftdReportDate').value;
-    const reportShift = document.getElementById('ftdReportShift').value;
-    
-    if (!reportDate) {
-        alert("Please select a date for the report.");
-        return;
-    }
-    
-    // Get records for the selected date
-    let dateRecords = allRecords.filter(record => record.date === reportDate);
-    
-    if (dateRecords.length === 0) {
-        alert("No records found for the selected criteria.");
-        document.getElementById('ftdReportActions').style.display = 'none';
-        return;
-    }
-    
-    // Separate day and night shifts
-    const dayRecords = dateRecords.filter(record => record.shift === "A-SHIFT");
-    const nightRecords = dateRecords.filter(record => record.shift === "B-SHIFT");
-    
-    // Filter records based on selected shift
-    let filteredRecords = [];
-    if (reportShift === "DAY") {
-        filteredRecords = dayRecords;
-    } else if (reportShift === "NIGHT") {
-        filteredRecords = nightRecords;
-    } else if (reportShift === "FULL DAY") {
-        filteredRecords = dateRecords;
-    }
-    
-    // Group by customer and material
-    const customerData = {};
-    const materialTypes = ["10 MM", "20 MM", "V/SAND", "Scalping", "P/Sand", "40MM", "GSB/WET MIX", "R/Sand"];
-    
-    // Initialize customer data structure
-    for (const customer of [...new Set(filteredRecords.map(r => r.clientDetails))]) {
-        customerData[customer] = {
-            totalTonnage: 0,
-            totalTrips: 0,
-            materials: {},
-            transactions: []
-        };
-        
-        materialTypes.forEach(material => {
-            customerData[customer].materials[material] = { tonnage: 0, trips: 0 };
-        });
-    }
-    
-    // Process filtered records
-    filteredRecords.forEach(record => {
-        if (!customerData[record.clientDetails]) {
-            customerData[record.clientDetails] = {
-                totalTonnage: 0,
-                totalTrips: 0,
-                materials: {},
-                transactions: []
-            };
+        function generateFtdReport() {
+            const reportDate = document.getElementById('ftdReportDate').value;
+            const reportShift = document.getElementById('ftdReportShift').value;
             
-            materialTypes.forEach(material => {
-                customerData[record.clientDetails].materials[material] = { tonnage: 0, trips: 0 };
-            });
-        }
-        
-        customerData[record.clientDetails].totalTonnage += record.netWt;
-        customerData[record.clientDetails].totalTrips += 1;
-        
-        if (customerData[record.clientDetails].materials[record.materialType]) {
-            customerData[record.clientDetails].materials[record.materialType].tonnage += record.netWt;
-            customerData[record.clientDetails].materials[record.materialType].trips += 1;
-        }
-        
-        // Add transaction details
-        customerData[record.clientDetails].transactions.push({
-            date: record.date,
-            slipNo: record.weighmentSlipNo,
-            client: record.clientDetails,
-            material: record.materialType,
-            netWt: record.netWt,
-            rate: record.ratePerTone,
-            amount: record.saleAmount
-        });
-    });
-    
-    currentFtdReportData = { 
-        date: reportDate, 
-        shift: reportShift, 
-        customerData, 
-        materialTypes,
-        dayRecords,
-        nightRecords
-    };
-    document.getElementById('ftdReportActions').style.display = 'block';
-    
-    let reportHTML = '';
-    const formattedDate = formatDate(reportDate);
-    
-    // Calculate totals for day and night shifts
-    let dayTotalTonnage = 0;
-    let dayTotalTrips = 0;
-    const dayMaterialTotals = {};
-    materialTypes.forEach(material => dayMaterialTotals[material] = { tonnage: 0, trips: 0 });
-    
-    dayRecords.forEach(record => {
-        dayTotalTonnage += record.netWt;
-        dayTotalTrips += 1;
-        if (dayMaterialTotals[record.materialType]) {
-            dayMaterialTotals[record.materialType].tonnage += record.netWt;
-            dayMaterialTotals[record.materialType].trips += 1;
-        }
-    });
-    
-    let nightTotalTonnage = 0;
-    let nightTotalTrips = 0;
-    const nightMaterialTotals = {};
-    materialTypes.forEach(material => nightMaterialTotals[material] = { tonnage: 0, trips: 0 });
-    
-    nightRecords.forEach(record => {
-        nightTotalTonnage += record.netWt;
-        nightTotalTrips += 1;
-        if (nightMaterialTotals[record.materialType]) {
-            nightMaterialTotals[record.materialType].tonnage += record.netWt;
-            nightMaterialTotals[record.materialType].trips += 1;
-        }
-    });
-    
-    // Calculate combined totals
-    const combinedTotalTonnage = dayTotalTonnage + nightTotalTonnage;
-    const combinedTotalTrips = dayTotalTrips + nightTotalTrips;
-    const combinedMaterialTotals = {};
-    materialTypes.forEach(material => {
-        combinedMaterialTotals[material] = {
-            tonnage: (dayMaterialTotals[material]?.tonnage || 0) + (nightMaterialTotals[material]?.tonnage || 0),
-            trips: (dayMaterialTotals[material]?.trips || 0) + (nightMaterialTotals[material]?.trips || 0)
-        };
-    });
-    
-    // Calculate cash and credit sales
-    let totalCashSale = 0;
-    let totalCreditSale = 0;
-    
-    filteredRecords.forEach(record => {
-        if (record.paymentMode === "Cash") {
-            totalCashSale += record.saleAmount;
-        } else if (record.paymentMode === "Credit") {
-            totalCreditSale += record.saleAmount;
-        }
-    });
-    
-    // Generate report based on selected shift
-    if (reportShift === "DAY" || reportShift === "FULL DAY") {
-        reportHTML += `<div class="section-header">A-SHIFT (Day Shift) – Dispatch Vehicle Wise Planning</div>`;
-        reportHTML += `<table class="ftd-report-table">`;
-        reportHTML += `<thead><tr><th>Customer Name</th>`;
-        materialTypes.forEach(material => reportHTML += `<th>${material}</th>`);
-        reportHTML += `<th>TOTAL</th></tr></thead><tbody>`;
-        
-        // Add day shift customer data
-        for (const customer in customerData) {
-            // Only show customers with day shift records
-            const hasDayRecords = dayRecords.some(record => record.clientDetails === customer);
-            if (hasDayRecords || reportShift === "FULL DAY") {
-                reportHTML += `<tr class="ftd-customer-row"><td>${customer}</td>`;
-                materialTypes.forEach(material => {
-                    const tonnage = customerData[customer].materials[material].tonnage;
-                    reportHTML += `<td>${tonnage > 0 ? tonnage.toFixed(2) : ''}</td>`;
-                });
-                reportHTML += `<td>${customerData[customer].totalTonnage.toFixed(2)}</td></tr>`;
+            if (!reportDate) {
+                alert("Please select a date for the report.");
+                return;
             }
-        }
-        
-        // Add day shift totals
-        if (reportShift === "DAY") {
-            reportHTML += `<tr class="ftd-total-row"><td>Total No of Vehicles: ${dayTotalTrips}</td>`;
-            materialTypes.forEach(material => {
-                reportHTML += `<td>${dayMaterialTotals[material]?.tonnage > 0 ? dayMaterialTotals[material].tonnage.toFixed(2) : ''}</td>`;
-            });
-            reportHTML += `<td>${dayTotalTonnage.toFixed(2)}</td></tr>`;
-        }
-        reportHTML += `</tbody></table>`;
-    }
-    
-    if (reportShift === "NIGHT" || reportShift === "FULL DAY") {
-        reportHTML += `<div class="section-header">B-SHIFT (Night Shift) – Dispatch Vehicle Wise Planning</div>`;
-        reportHTML += `<table class="ftd-report-table">`;
-        reportHTML += `<thead><tr><th>Customer Name</th>`;
-        materialTypes.forEach(material => reportHTML += `<th>${material}</th>`);
-        reportHTML += `<th>TOTAL</th></tr></thead><tbody>`;
-        
-        // Add night shift customer data
-        for (const customer in customerData) {
-            // Only show customers with night shift records
-            const hasNightRecords = nightRecords.some(record => record.clientDetails === customer);
-            if (hasNightRecords || reportShift === "FULL DAY") {
-                reportHTML += `<tr class="ftd-customer-row"><td>${customer}</td>`;
-                materialTypes.forEach(material => {
-                    const tonnage = customerData[customer].materials[material].tonnage;
-                    reportHTML += `<td>${tonnage > 0 ? tonnage.toFixed(2) : ''}</td>`;
-                });
-                reportHTML += `<td>${customerData[customer].totalTonnage.toFixed(2)}</td></tr>`;
+            
+            // Get records for the selected date
+            let dateRecords = allRecords.filter(record => record.date === reportDate);
+            
+            if (dateRecords.length === 0) {
+                alert("No records found for the selected criteria.");
+                document.getElementById('ftdReportActions').style.display = 'none';
+                return;
             }
-        }
-        
-        // Add night shift totals
-        if (reportShift === "NIGHT") {
-            reportHTML += `<tr class="ftd-total-row"><td>Total No of Vehicles: ${nightTotalTrips}</td>`;
-            materialTypes.forEach(material => {
-                reportHTML += `<td>${nightMaterialTotals[material]?.tonnage > 0 ? nightMaterialTotals[material].tonnage.toFixed(2) : ''}</td>`;
+            
+            // Separate day and night shifts
+            const dayRecords = dateRecords.filter(record => record.shift === "A-SHIFT");
+            const nightRecords = dateRecords.filter(record => record.shift === "B-SHIFT");
+            
+            // Filter records based on selected shift
+            let filteredRecords = [];
+            if (reportShift === "DAY") {
+                filteredRecords = dayRecords;
+            } else if (reportShift === "NIGHT") {
+                filteredRecords = nightRecords;
+            } else if (reportShift === "FULL DAY") {
+                filteredRecords = dateRecords;
+            }
+            
+            // Group by customer and material
+            const customerData = {};
+            const materialTypes = ["10 MM", "20 MM", "V/SAND", "Scalping", "P/Sand", "40MM", "GSB/WET MIX", "R/Sand"];
+            
+            // Initialize customer data structure
+            for (const customer of [...new Set(filteredRecords.map(r => r.clientDetails))]) {
+                customerData[customer] = {
+                    totalTonnage: 0,
+                    totalTrips: 0,
+                    materials: {},
+                    transactions: []
+                };
+                
+                materialTypes.forEach(material => {
+                    customerData[customer].materials[material] = { tonnage: 0, trips: 0 };
+                });
+            }
+            
+            // Process filtered records
+            filteredRecords.forEach(record => {
+                if (!customerData[record.clientDetails]) {
+                    customerData[record.clientDetails] = {
+                        totalTonnage: 0,
+                        totalTrips: 0,
+                        materials: {},
+                        transactions: []
+                    };
+                    
+                    materialTypes.forEach(material => {
+                        customerData[record.clientDetails].materials[material] = { tonnage: 0, trips: 0 };
+                    });
+                }
+                
+                customerData[record.clientDetails].totalTonnage += record.netWt;
+                customerData[record.clientDetails].totalTrips += 1;
+                
+                if (customerData[record.clientDetails].materials[record.materialType]) {
+                    customerData[record.clientDetails].materials[record.materialType].tonnage += record.netWt;
+                    customerData[record.clientDetails].materials[record.materialType].trips += 1;
+                }
+                
+                // Add transaction details (without slip number)
+                customerData[record.clientDetails].transactions.push({
+                    date: record.date,
+                    client: record.clientDetails,
+                    material: record.materialType,
+                    netWt: record.netWt,
+                    rate: record.ratePerTone,
+                    amount: record.saleAmount
+                });
             });
-            reportHTML += `<td>${nightTotalTonnage.toFixed(2)}</td></tr>`;
-        }
-        reportHTML += `</tbody></table>`;
-    }
-    
-    // Add summary table for FULL DAY report
-    if (reportShift === "FULL DAY") {
-        reportHTML += `<div class="section-header">Summary</div>`;
-        reportHTML += `<table class="ftd-summary-table">`;
-        reportHTML += `<thead><tr><th>Shift</th><th>No of Vehicles</th>`;
-        materialTypes.forEach(material => reportHTML += `<th>${material}</th>`);
-        reportHTML += `<th>Grand Total MT</th></tr></thead><tbody>`;
-        
-        // Day shift summary
-        reportHTML += `<tr><td>Day Shift Total</td><td>${dayTotalTrips}</td>`;
-        materialTypes.forEach(material => {
-            reportHTML += `<td>${dayMaterialTotals[material]?.tonnage > 0 ? dayMaterialTotals[material].tonnage.toFixed(2) : ''}</td>`;
-        });
-        reportHTML += `<td>${dayTotalTonnage.toFixed(2)}</td></tr>`;
-        
-        // Night shift summary
-        reportHTML += `<tr><td>Night Shift Total</td><td>${nightTotalTrips}</td>`;
-        materialTypes.forEach(material => {
-            reportHTML += `<td>${nightMaterialTotals[material]?.tonnage > 0 ? nightMaterialTotals[material].tonnage.toFixed(2) : ''}</td>`;
-        });
-        reportHTML += `<td>${nightTotalTonnage.toFixed(2)}</td></tr>`;
-        
-        // Combined totals
-        reportHTML += `<tr class="ftd-summary-total"><td>Combined Total (Day + Night)</td><td>${combinedTotalTrips}</td>`;
-        materialTypes.forEach(material => {
-            reportHTML += `<td>${combinedMaterialTotals[material]?.tonnage > 0 ? combinedMaterialTotals[material].tonnage.toFixed(2) : ''}</td>`;
-        });
-        reportHTML += `<td>${combinedTotalTonnage.toFixed(2)}</td></tr>`;
-        
-        // Overall grand total
-        reportHTML += `<tr class="ftd-summary-total"><td colspan="2">Overall Grand Total Vehicles: ${combinedTotalTrips}</td>`;
-        reportHTML += `<td colspan="${materialTypes.length}">Overall Grand Total MT: ${combinedTotalTonnage.toFixed(2)}</td>`;
-        reportHTML += `<td></td></tr>`;
-        
-        // Cash and credit sales
-        reportHTML += `<tr class="ftd-summary-total"><td colspan="2">Total Cash Sale Amount: ₹${totalCashSale.toFixed(2)}</td>`;
-        reportHTML += `<td colspan="${materialTypes.length}">Total Credit Sale Amount: ₹${totalCreditSale.toFixed(2)}</td>`;
-        reportHTML += `<td></td></tr>`;
-        
-        reportHTML += `</tbody></table>`;
-    }
-    
-    // Add transaction details in point format
-    reportHTML += `<div class="section-header">Transaction Details</div>`;
-    reportHTML += `<div class="transaction-details">`;
-    
-    let transactionCounter = 1;
-    for (const customer in customerData) {
-        reportHTML += `<div class="transaction-points">`;
-        customerData[customer].transactions.forEach(tx => {
-            reportHTML += `<div class="transaction-point">`;
-            reportHTML += `${transactionCounter++}. Date: ${formatDate(tx.date)}, Slip No: ${tx.slipNo}, Client: ${tx.client}, Material: ${tx.material}, Net WT: ${tx.netWt.toFixed(2)} MT, Rate: ${tx.rate.toFixed(2)}, Amount: ${tx.amount.toFixed(2)}`;
+            
+            currentFtdReportData = { 
+                date: reportDate, 
+                shift: reportShift, 
+                customerData, 
+                materialTypes,
+                dayRecords,
+                nightRecords
+            };
+            document.getElementById('ftdReportActions').style.display = 'block';
+            
+            let reportHTML = '';
+            const formattedDate = formatDate(reportDate);
+            
+            // Calculate totals for day and night shifts
+            let dayTotalTonnage = 0;
+            let dayTotalTrips = 0;
+            const dayMaterialTotals = {};
+            materialTypes.forEach(material => dayMaterialTotals[material] = { tonnage: 0, trips: 0 });
+            
+            dayRecords.forEach(record => {
+                dayTotalTonnage += record.netWt;
+                dayTotalTrips += 1;
+                if (dayMaterialTotals[record.materialType]) {
+                    dayMaterialTotals[record.materialType].tonnage += record.netWt;
+                    dayMaterialTotals[record.materialType].trips += 1;
+                }
+            });
+            
+            let nightTotalTonnage = 0;
+            let nightTotalTrips = 0;
+            const nightMaterialTotals = {};
+            materialTypes.forEach(material => nightMaterialTotals[material] = { tonnage: 0, trips: 0 });
+            
+            nightRecords.forEach(record => {
+                nightTotalTonnage += record.netWt;
+                nightTotalTrips += 1;
+                if (nightMaterialTotals[record.materialType]) {
+                    nightMaterialTotals[record.materialType].tonnage += record.netWt;
+                    nightMaterialTotals[record.materialType].trips += 1;
+                }
+            });
+            
+            // Calculate combined totals
+            const combinedTotalTonnage = dayTotalTonnage + nightTotalTonnage;
+            const combinedTotalTrips = dayTotalTrips + nightTotalTrips;
+            const combinedMaterialTotals = {};
+            materialTypes.forEach(material => {
+                combinedMaterialTotals[material] = {
+                    tonnage: (dayMaterialTotals[material]?.tonnage || 0) + (nightMaterialTotals[material]?.tonnage || 0),
+                    trips: (dayMaterialTotals[material]?.trips || 0) + (nightMaterialTotals[material]?.trips || 0)
+                };
+            });
+            
+            // Calculate cash and credit sales
+            let totalCashSale = 0;
+            let totalCreditSale = 0;
+            
+            filteredRecords.forEach(record => {
+                if (record.paymentMode === "Cash") {
+                    totalCashSale += record.saleAmount;
+                } else if (record.paymentMode === "Credit") {
+                    totalCreditSale += record.saleAmount;
+                }
+            });
+            
+            // Generate report based on selected shift
+            if (reportShift === "DAY" || reportShift === "FULL DAY") {
+                reportHTML += `<div class="section-header">A-SHIFT (Day Shift) – Dispatch Vehicle Wise Planning</div>`;
+                reportHTML += `<table class="ftd-report-table">`;
+                reportHTML += `<thead><tr><th>Customer Name</th>`;
+                materialTypes.forEach(material => reportHTML += `<th>${material}</th>`);
+                reportHTML += `<th>TOTAL</th></tr></thead><tbody>`;
+                
+                // Add day shift customer data
+                for (const customer in customerData) {
+                    // Only show customers with day shift records
+                    const hasDayRecords = dayRecords.some(record => record.clientDetails === customer);
+                    if (hasDayRecords || reportShift === "FULL DAY") {
+                        reportHTML += `<tr class="ftd-customer-row"><td>${customer}</td>`;
+                        materialTypes.forEach(material => {
+                            const tonnage = customerData[customer].materials[material].tonnage;
+                            reportHTML += `<td>${tonnage > 0 ? tonnage.toFixed(2) : ''}</td>`;
+                        });
+                        reportHTML += `<td>${customerData[customer].totalTonnage.toFixed(2)}</td></tr>`;
+                    }
+                }
+                
+                // Add day shift totals
+                if (reportShift === "DAY") {
+                    reportHTML += `<tr class="ftd-total-row"><td>Total No of Vehicles: ${dayTotalTrips}</td>`;
+                    materialTypes.forEach(material => {
+                        reportHTML += `<td>${dayMaterialTotals[material]?.tonnage > 0 ? dayMaterialTotals[material].tonnage.toFixed(2) : ''}</td>`;
+                    });
+                    reportHTML += `<td>${dayTotalTonnage.toFixed(2)}</td></tr>`;
+                }
+                reportHTML += `</tbody></table>`;
+            }
+            
+            if (reportShift === "NIGHT" || reportShift === "FULL DAY") {
+                reportHTML += `<div class="section-header">B-SHIFT (Night Shift) – Dispatch Vehicle Wise Planning</div>`;
+                reportHTML += `<table class="ftd-report-table">`;
+                reportHTML += `<thead><tr><th>Customer Name</th>`;
+                materialTypes.forEach(material => reportHTML += `<th>${material}</th>`);
+                reportHTML += `<th>TOTAL</th></tr></thead><tbody>`;
+                
+                // Add night shift customer data
+                for (const customer in customerData) {
+                    // Only show customers with night shift records
+                    const hasNightRecords = nightRecords.some(record => record.clientDetails === customer);
+                    if (hasNightRecords || reportShift === "FULL DAY") {
+                        reportHTML += `<tr class="ftd-customer-row"><td>${customer}</td>`;
+                        materialTypes.forEach(material => {
+                            const tonnage = customerData[customer].materials[material].tonnage;
+                            reportHTML += `<td>${tonnage > 0 ? tonnage.toFixed(2) : ''}</td>`;
+                        });
+                        reportHTML += `<td>${customerData[customer].totalTonnage.toFixed(2)}</td></tr>`;
+                    }
+                }
+                
+                // Add night shift totals
+                if (reportShift === "NIGHT") {
+                    reportHTML += `<tr class="ftd-total-row"><td>Total No of Vehicles: ${nightTotalTrips}</td>`;
+                    materialTypes.forEach(material => {
+                        reportHTML += `<td>${nightMaterialTotals[material]?.tonnage > 0 ? nightMaterialTotals[material].tonnage.toFixed(2) : ''}</td>`;
+                    });
+                    reportHTML += `<td>${nightTotalTonnage.toFixed(2)}</td></tr>`;
+                }
+                reportHTML += `</tbody></table>`;
+            }
+            
+            // Add summary table for FULL DAY report
+            if (reportShift === "FULL DAY") {
+                reportHTML += `<div class="section-header">Summary</div>`;
+                reportHTML += `<table class="ftd-summary-table">`;
+                reportHTML += `<thead><tr><th>Shift</th><th>No of Vehicles</th>`;
+                materialTypes.forEach(material => reportHTML += `<th>${material}</th>`);
+                reportHTML += `<th>Grand Total MT</th></tr></thead><tbody>`;
+                
+                // Day shift summary
+                reportHTML += `<tr><td>Day Shift Total</td><td>${dayTotalTrips}</td>`;
+                materialTypes.forEach(material => {
+                    reportHTML += `<td>${dayMaterialTotals[material]?.tonnage > 0 ? dayMaterialTotals[material].tonnage.toFixed(2) : ''}</td>`;
+                });
+                reportHTML += `<td>${dayTotalTonnage.toFixed(2)}</td></tr>`;
+                
+                // Night shift summary
+                reportHTML += `<tr><td>Night Shift Total</td><td>${nightTotalTrips}</td>`;
+                materialTypes.forEach(material => {
+                    reportHTML += `<td>${nightMaterialTotals[material]?.tonnage > 0 ? nightMaterialTotals[material].tonnage.toFixed(2) : ''}</td>`;
+                });
+                reportHTML += `<td>${nightTotalTonnage.toFixed(2)}</td></tr>`;
+                
+                // Combined totals
+                reportHTML += `<tr class="ftd-summary-total"><td>Combined Total (Day + Night)</td><td>${combinedTotalTrips}</td>`;
+                materialTypes.forEach(material => {
+                    reportHTML += `<td>${combinedMaterialTotals[material]?.tonnage > 0 ? combinedMaterialTotals[material].tonnage.toFixed(2) : ''}</td>`;
+                });
+                reportHTML += `<td>${combinedTotalTonnage.toFixed(2)}</td></tr>`;
+                
+                // Overall grand total
+                reportHTML += `<tr class="ftd-summary-total"><td colspan="2">Overall Grand Total Vehicles: ${combinedTotalTrips}</td>`;
+                reportHTML += `<td colspan="${materialTypes.length}">Overall Grand Total MT: ${combinedTotalTonnage.toFixed(2)}</td>`;
+                reportHTML += `<td></td></tr>`;
+                
+                // Cash and credit sales
+                reportHTML += `<tr class="ftd-summary-total"><td colspan="2">Total Cash Sale Amount: ₹${totalCashSale.toFixed(2)}</td>`;
+                reportHTML += `<td colspan="${materialTypes.length}">Total Credit Sale Amount: ₹${totalCreditSale.toFixed(2)}</td>`;
+                reportHTML += `<td></td></tr>`;
+                
+                reportHTML += `</tbody></table>`;
+            }
+            
+            // Add transaction details in point format (without slip numbers)
+            reportHTML += `<div class="section-header">Transaction Details</div>`;
+            reportHTML += `<div class="transaction-details">`;
+            
+            let transactionCounter = 1;
+            for (const customer in customerData) {
+                reportHTML += `<div class="transaction-points">`;
+                customerData[customer].transactions.forEach(tx => {
+                    reportHTML += `<div class="transaction-point">`;
+                    reportHTML += `${transactionCounter++}. Date: ${formatDate(tx.date)}, Client: ${tx.client}, Material: ${tx.material}, Net WT: ${tx.netWt.toFixed(2)} MT, Rate: ${tx.rate.toFixed(2)}, Amount: ${tx.amount.toFixed(2)}`;
+                    reportHTML += `</div>`;
+                });
+                reportHTML += `</div>`;
+            }
+            
             reportHTML += `</div>`;
-        });
-        reportHTML += `</div>`;
-    }
-    
-    reportHTML += `</div>`;
-    
-    document.getElementById('ftdReportContainer').innerHTML = reportHTML;
-}
+            
+            document.getElementById('ftdReportContainer').innerHTML = reportHTML;
+        }
 
         function generateTransportBill() {
             const startDate = document.getElementById('transportBillStartDate').value;
