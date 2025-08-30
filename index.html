@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -204,24 +205,6 @@
         .transaction-point {
             padding: 3px 0;
         }
-        .client-bill-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
-        }
-        .client-bill-table th, .client-bill-table td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: center;
-        }
-        .client-bill-table th {
-            background-color: #f2f2f2;
-            font-weight: bold;
-        }
-        .client-bill-total {
-            background-color: #d4edda;
-            font-weight: bold;
-        }
     </style>
 </head>
 <body>
@@ -370,7 +353,7 @@
                     <input type="number" class="form-control" id="grossWt" step="0.01">
                 </div>
                 <div class="col-md-3">
-                    <label for 'tareWt' class="form-label">Tare WT</label>
+                    <label for="tareWt" class="form-label">Tare WT</label>
                     <input type="number" class="form-control" id="tareWt" step="0.01">
                 </div>
                 <div class="col-md-3">
@@ -574,47 +557,43 @@
         <div class="section-header">Client Wise Dispatch Bill Report</div>
         <div class="row mb-4">
             <div class="col-md-4">
-                <label for="clientBillMonth" class="form-label">Select Month</label>
-                <input type="month" class="form-control" id="clientBillMonth">
+                <label class="form-label">Select Date Range</label>
+                <div class="input-group">
+                    <input type="date" class="form-control" id="clientBillStartDate">
+                    <span class="input-group-text">to</span>
+                    <input type="date" class="form-control" id="clientBillEndDate">
+                </div>
             </div>
             <div class="col-md-3">
                 <label for="clientBillClient" class="form-label">Client (Optional)</label>
-                <select class="form-select" id="clientBillClient">
-                    <option value="">All Clients</option>
-                    <option value="L & T P1 – Rambali">L & T P1 – Rambali</option>
-                    <option value="L & T P2 – Rambali">L & T P2 – Rambali</option>
-                    <option value="KEC – Rambali">KEC – Rambali</option>
-                    <option value="JS Mining – Rambali">JS Mining – Rambali</option>
-                    <option value="ITD – Rambali">ITD – Rambali</option>
-                    <option value="Sowaparnika – Rambali">Sowaparnika – Rambali</option>
-                    <option value="L & T Jio – Sindhiya">L & T Jio – Sindhiya</option>
-                    <option value="Arabind – Shela Nagar">Arabind – Shela Nagar</option>
-                    <option value="RKD – Shela Nagar">RKD – Shela Nagar</option>
-                    <option value="Afcyan – Shela Ngr">Afcyan – Shela Ngr</option>
-                    <option value="Bharath Verma – Airport">Bharath Verma – Airport</option>
-                    <option value="Aparna RMC – Gajuwaka">Aparna RMC – Gajuwaka</option>
-                    <option value="ACC RMC – Gajuwaka">ACC RMC – Gajuwaka</option>
-                    <option value="Prisam RMC – Gajuwaka">Prisam RMC – Gajuwaka</option>
-                    <option value="Nuvoco RMC – Gajuwaka">Nuvoco RMC – Gajuwaka</option>
-                    <option value="Ultratech – Mindi">Ultratech – Mindi</option>
-                    <option value="MK Builders – Madhurwada">MK Builders – Madhurwada</option>
-                    <option value="North Star Homes – Madhurwada">North Star Homes – Madhurwada</option>
-                    <option value="Coastal RMC – Madhurwada">Coastal RMC – Madhurwada</option>
-                    <option value="Coastal RMC – Achututapuram">Coastal RMC – Achututapuram</option>
-                    <option value="Vizag Port – Vizag Port">Vizag Port – Vizag Port</option>
-                </select>
+                <input type="text" class="form-control" id="clientBillClient" placeholder="Leave blank for all clients">
             </div>
             <div class="col-md-2">
                 <label class="form-label">&nbsp;</label>
                 <button type="button" class="btn btn-primary form-control" id="btnClientBill">Generate Client Bill</button>
             </div>
         </div>
-        <div class="report-actions" id="clientBillActions" style="display: none;">
+        <div class="report-actions" id="clientReportActions" style="display: none;">
             <button type="button" class="btn btn-success" id="btnDownloadClientPDF">Download PDF Report</button>
             <button type="button" class="btn btn-primary" id="btnDownloadClientExcel">Download Excel Report</button>
         </div>
         <div class="table-responsive">
-            <div id="clientBillContainer"></div>
+            <table class="table table-bordered report-table" id="clientBillTable">
+                <thead>
+                    <tr>
+                        <th>Client Details</th>
+                        <th>Total Trips</th>
+                        <th>Total NET WT (MT)</th>
+                        <th>Total Sale Amount</th>
+                        <th>Transaction Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td colspan="5" class="text-center">No report generated yet</td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
     </div>
     <!-- Add Vehicle Modal -->
@@ -683,7 +662,7 @@
         let currentDispatchReportData = null;
         let currentFtdReportData = null;
         let currentTransportReportData = null;
-        let currentClientBillData = null;
+        let currentClientReportData = null;
         
         // Load data from localStorage when page loads
         document.addEventListener('DOMContentLoaded', function() {
@@ -707,15 +686,6 @@
                 clientDropdown.appendChild(option);
             });
             
-            // Initialize client bill client dropdown
-            const clientBillClient = document.getElementById('clientBillClient');
-            clientNames.forEach(client => {
-                const option = document.createElement('option');
-                option.value = client;
-                option.textContent = client;
-                clientBillClient.appendChild(option);
-            });
-            
             // Set default dates to today
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('accountingDate').value = today;
@@ -724,10 +694,8 @@
             document.getElementById('ftdReportDate').value = today;
             document.getElementById('transportBillStartDate').value = today;
             document.getElementById('transportBillEndDate').value = today;
-            
-            // Set default month to current month
-            const currentMonth = new Date().toISOString().slice(0, 7);
-            document.getElementById('clientBillMonth').value = currentMonth;
+            document.getElementById('clientBillStartDate').value = today;
+            document.getElementById('clientBillEndDate').value = today;
             
             // Event listeners for calculations
             document.getElementById('grossWt').addEventListener('input', calculateValues);
@@ -799,13 +767,6 @@
                     clientDropdown.appendChild(option);
                     clientDropdown.value = newClientName;
                     document.getElementById('clientDetails').value = newClientName;
-                    
-                    // Also add to client bill dropdown
-                    const billOption = document.createElement('option');
-                    billOption.value = newClientName;
-                    billOption.textContent = newClientName;
-                    document.getElementById('clientBillClient').appendChild(billOption);
-                    
                     const modal = bootstrap.Modal.getInstance(document.getElementById('addClientModal'));
                     modal.hide();
                     document.getElementById('newClientName').value = '';
@@ -1038,6 +999,11 @@
             const date = new Date(dateStr);
             return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
         }
+
+        function getMonthYear(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+        }
         
         function generateDispatchReport() {
             const reportDate = document.getElementById('dispatchReportDate').value;
@@ -1123,7 +1089,7 @@
             });
             reportHTML += `<td class="number-cell">${grandTotalTonnage.toFixed(2)}</td></tr>`;
             
-            reportHTML += `<tr class('total-header')><td colspan="2">TOTAL TRIPS</td>`;
+            reportHTML += `<tr class="total-header"><td colspan="2">TOTAL TRIPS</td>`;
             materialTypes.forEach(material => {
                 reportHTML += `<td class="number-cell">${materialTotals[material].trips > 0 ? materialTotals[material].trips : ''}</td>`;
             });
@@ -1155,59 +1121,65 @@
             const dayRecords = dateRecords.filter(record => record.shift === "A-SHIFT");
             const nightRecords = dateRecords.filter(record => record.shift === "B-SHIFT");
             
-            // Filter records based on selected shift
-            let filteredRecords = [];
-            if (reportShift === "A-SHIFT") {
-                filteredRecords = dayRecords;
-            } else if (reportShift === "B-SHIFT") {
-                filteredRecords = nightRecords;
-            } else if (reportShift === "ALL") {
-                filteredRecords = dateRecords;
-            }
-            
-            // Group by customer and material
-            const customerData = {};
             const materialTypes = ["10 MM", "20 MM", "V/SAND", "Scalping", "P/Sand", "40MM", "GSB/WET MIX", "R/Sand"];
             
-            // Initialize customer data structure
-            for (const customer of [...new Set(filteredRecords.map(r => r.clientDetails))]) {
-                customerData[customer] = {
-                    totalTonnage: 0,
-                    totalTrips: 0,
-                    materials: {},
-                    transactions: []
-                };
-                
-                materialTypes.forEach(material => {
-                    customerData[customer].materials[material] = { tonnage: 0, trips: 0 };
-                });
-            }
-            
-            // Process filtered records
-            filteredRecords.forEach(record => {
-                if (!customerData[record.clientDetails]) {
-                    customerData[record.clientDetails] = {
+            // Build dayCustomerData
+            const dayCustomerData = {};
+            dayRecords.forEach(record => {
+                if (!dayCustomerData[record.clientDetails]) {
+                    dayCustomerData[record.clientDetails] = {
                         totalTonnage: 0,
                         totalTrips: 0,
                         materials: {},
                         transactions: []
                     };
-                    
                     materialTypes.forEach(material => {
-                        customerData[record.clientDetails].materials[material] = { tonnage: 0, trips: 0 };
+                        dayCustomerData[record.clientDetails].materials[material] = { tonnage: 0, trips: 0 };
                     });
                 }
                 
-                customerData[record.clientDetails].totalTonnage += record.netWt;
-                customerData[record.clientDetails].totalTrips += 1;
+                dayCustomerData[record.clientDetails].totalTonnage += record.netWt;
+                dayCustomerData[record.clientDetails].totalTrips += 1;
                 
-                if (customerData[record.clientDetails].materials[record.materialType]) {
-                    customerData[record.clientDetails].materials[record.materialType].tonnage += record.netWt;
-                    customerData[record.clientDetails].materials[record.materialType].trips += 1;
+                if (dayCustomerData[record.clientDetails].materials[record.materialType]) {
+                    dayCustomerData[record.clientDetails].materials[record.materialType].tonnage += record.netWt;
+                    dayCustomerData[record.clientDetails].materials[record.materialType].trips += 1;
                 }
                 
-                // Add transaction details (without slip number)
-                customerData[record.clientDetails].transactions.push({
+                dayCustomerData[record.clientDetails].transactions.push({
+                    date: record.date,
+                    client: record.clientDetails,
+                    material: record.materialType,
+                    netWt: record.netWt,
+                    rate: record.ratePerTone,
+                    amount: record.saleAmount
+                });
+            });
+            
+            // Build nightCustomerData
+            const nightCustomerData = {};
+            nightRecords.forEach(record => {
+                if (!nightCustomerData[record.clientDetails]) {
+                    nightCustomerData[record.clientDetails] = {
+                        totalTonnage: 0,
+                        totalTrips: 0,
+                        materials: {},
+                        transactions: []
+                    };
+                    materialTypes.forEach(material => {
+                        nightCustomerData[record.clientDetails].materials[material] = { tonnage: 0, trips: 0 };
+                    });
+                }
+                
+                nightCustomerData[record.clientDetails].totalTonnage += record.netWt;
+                nightCustomerData[record.clientDetails].totalTrips += 1;
+                
+                if (nightCustomerData[record.clientDetails].materials[record.materialType]) {
+                    nightCustomerData[record.clientDetails].materials[record.materialType].tonnage += record.netWt;
+                    nightCustomerData[record.clientDetails].materials[record.materialType].trips += 1;
+                }
+                
+                nightCustomerData[record.clientDetails].transactions.push({
                     date: record.date,
                     client: record.clientDetails,
                     material: record.materialType,
@@ -1220,10 +1192,11 @@
             currentFtdReportData = { 
                 date: reportDate, 
                 shift: reportShift, 
-                customerData, 
                 materialTypes,
                 dayRecords,
-                nightRecords
+                nightRecords,
+                dayCustomerData,
+                nightCustomerData
             };
             document.getElementById('ftdReportActions').style.display = 'block';
             
@@ -1274,6 +1247,7 @@
             let totalCashSale = 0;
             let totalCreditSale = 0;
             
+            const filteredRecords = reportShift === "ALL" ? dateRecords : reportShift === "A-SHIFT" ? dayRecords : nightRecords;
             filteredRecords.forEach(record => {
                 if (record.paymentMode === "Cash") {
                     totalCashSale += record.saleAmount;
@@ -1291,20 +1265,16 @@
                 reportHTML += `<th>TOTAL</th></tr></thead><tbody>`;
                 
                 // Add day shift customer data
-                for (const customer in customerData) {
-                    // Only show customers with day shift records
-                    const hasDayRecords = dayRecords.some(record => record.clientDetails === customer);
-                    if (hasDayRecords || reportShift === "ALL") {
-                        reportHTML += `<tr class="ftd-customer-row"><td>${customer}</td>`;
-                        materialTypes.forEach(material => {
-                            const tonnage = customerData[customer].materials[material].tonnage;
-                            reportHTML += `<td>${tonnage > 0 ? tonnage.toFixed(2) : ''}</td>`;
-                        });
-                        reportHTML += `<td>${customerData[customer].totalTonnage.toFixed(2)}</td></tr>`;
-                    }
+                for (const customer in dayCustomerData) {
+                    reportHTML += `<tr class="ftd-customer-row"><td>${customer}</td>`;
+                    materialTypes.forEach(material => {
+                        const tonnage = dayCustomerData[customer].materials[material].tonnage;
+                        reportHTML += `<td>${tonnage > 0 ? tonnage.toFixed(2) : ''}</td>`;
+                    });
+                    reportHTML += `<td>${dayCustomerData[customer].totalTonnage.toFixed(2)}</td></tr>`;
                 }
                 
-                // Add day shift totals
+                // Add day shift totals if not ALL
                 if (reportShift === "A-SHIFT") {
                     reportHTML += `<tr class="ftd-total-row"><td>Total No of Vehicles: ${dayTotalTrips}</td>`;
                     materialTypes.forEach(material => {
@@ -1323,20 +1293,16 @@
                 reportHTML += `<th>TOTAL</th></tr></thead><tbody>`;
                 
                 // Add night shift customer data
-                for (const customer in customerData) {
-                    // Only show customers with night shift records
-                    const hasNightRecords = nightRecords.some(record => record.clientDetails === customer);
-                    if (hasNightRecords || reportShift === "ALL") {
-                        reportHTML += `<tr class="ftd-customer-row"><td>${customer}</td>`;
-                        materialTypes.forEach(material => {
-                            const tonnage = customerData[customer].materials[material].tonnage;
-                            reportHTML += `<td>${tonnage > 0 ? tonnage.toFixed(2) : ''}</td>`;
-                        });
-                        reportHTML += `<td>${customerData[customer].totalTonnage.toFixed(2)}</td></tr>`;
-                    }
+                for (const customer in nightCustomerData) {
+                    reportHTML += `<tr class="ftd-customer-row"><td>${customer}</td>`;
+                    materialTypes.forEach(material => {
+                        const tonnage = nightCustomerData[customer].materials[material].tonnage;
+                        reportHTML += `<td>${tonnage > 0 ? tonnage.toFixed(2) : ''}</td>`;
+                    });
+                    reportHTML += `<td>${nightCustomerData[customer].totalTonnage.toFixed(2)}</td></tr>`;
                 }
                 
-                // Add night shift totals
+                // Add night shift totals if not ALL
                 if (reportShift === "B-SHIFT") {
                     reportHTML += `<tr class="ftd-total-row"><td>Total No of Vehicles: ${nightTotalTrips}</td>`;
                     materialTypes.forEach(material => {
@@ -1393,16 +1359,22 @@
             reportHTML += `<div class="section-header">Transaction Details</div>`;
             reportHTML += `<div class="transaction-details">`;
             
-            let transactionCounter = 1;
-            for (const customer in customerData) {
-                reportHTML += `<div class="transaction-points">`;
-                customerData[customer].transactions.forEach(tx => {
-                    reportHTML += `<div class="transaction-point">`;
-                    reportHTML += `${transactionCounter++}. Date: ${formatDate(tx.date)}, Client: ${tx.client}, Material: ${tx.material}, Net WT: ${tx.netWt.toFixed(2)} MT, Rate: ${tx.rate.toFixed(2)}, Amount: ${tx.amount.toFixed(2)}`;
-                    reportHTML += `</div>`;
-                });
-                reportHTML += `</div>`;
+            let allTransactions = [];
+            if (reportShift === "A-SHIFT" || reportShift === "ALL") {
+                Object.values(dayCustomerData).forEach(cust => allTransactions.push(...cust.transactions));
             }
+            if (reportShift === "B-SHIFT" || reportShift === "ALL") {
+                Object.values(nightCustomerData).forEach(cust => allTransactions.push(...cust.transactions));
+            }
+            
+            let transactionCounter = 1;
+            reportHTML += `<div class="transaction-points">`;
+            allTransactions.forEach(tx => {
+                reportHTML += `<div class="transaction-point">`;
+                reportHTML += `${transactionCounter++}. Date: ${formatDate(tx.date)}, Client: ${tx.client}, Material: ${tx.material}, Net WT: ${tx.netWt.toFixed(2)} MT, Rate: ${tx.rate.toFixed(2)}, Amount: ${tx.amount.toFixed(2)}`;
+                reportHTML += `</div>`;
+            });
+            reportHTML += `</div>`;
             
             reportHTML += `</div>`;
             
@@ -1477,135 +1449,108 @@
                 });
             }
         }
-        
+
         function generateClientBill() {
-            const month = document.getElementById('clientBillMonth').value;
-            const client = document.getElementById('clientBillClient').value;
+            const startDate = document.getElementById('clientBillStartDate').value;
+            const endDate = document.getElementById('clientBillEndDate').value;
+            const clientDetails = document.getElementById('clientBillClient').value.trim();
             
-            if (!month) {
-                alert("Please select a month for the report.");
+            if (!startDate || !endDate) {
+                alert("Please select a date range for the report.");
                 return;
             }
             
-            // Get start and end dates for the selected month
-            const startDate = month + '-01';
-            const endDate = new Date(new Date(month + '-01').getFullYear(), new Date(month + '-01').getMonth() + 1, 0).toISOString().split('T')[0];
-            
-            // Get records for the selected month
-            let monthRecords = allRecords.filter(record => record.date >= startDate && record.date <= endDate);
-            
-            // Filter by client if specified
-            if (client) {
-                monthRecords = monthRecords.filter(record => record.clientDetails === client);
+            let dateRecords = allRecords.filter(record => record.date >= startDate && record.date <= endDate);
+            if (clientDetails) {
+                dateRecords = dateRecords.filter(record => record.clientDetails === clientDetails);
             }
             
-            if (monthRecords.length === 0) {
+            if (dateRecords.length === 0) {
                 alert("No records found for the selected criteria.");
-                document.getElementById('clientBillActions').style.display = 'none';
+                document.getElementById('clientReportActions').style.display = 'none';
                 return;
             }
             
-            // Group by client and material
             const clientData = {};
-            const materialTypes = ["10 MM", "20 MM", "V/SAND", "Scalping", "P/Sand", "40MM", "GSB/WET MIX", "R/Sand"];
             
-            monthRecords.forEach(record => {
+            dateRecords.forEach(record => {
                 if (!clientData[record.clientDetails]) {
                     clientData[record.clientDetails] = {
-                        totalTonnage: 0,
-                        totalAmount: 0,
-                        materials: {},
+                        totalTrips: 0,
+                        totalNetWt: 0,
+                        totalSaleAmount: 0,
                         transactions: []
                     };
-                    
-                    materialTypes.forEach(material => {
-                        clientData[record.clientDetails].materials[material] = { tonnage: 0, amount: 0 };
-                    });
                 }
                 
-                clientData[record.clientDetails].totalTonnage += record.netWt;
-                clientData[record.clientDetails].totalAmount += record.saleAmount;
-                
-                if (clientData[record.clientDetails].materials[record.materialType]) {
-                    clientData[record.clientDetails].materials[record.materialType].tonnage += record.netWt;
-                    clientData[record.clientDetails].materials[record.materialType].amount += record.saleAmount;
-                }
-                
-                // Add transaction details
+                clientData[record.clientDetails].totalTrips += 1;
+                clientData[record.clientDetails].totalNetWt += record.netWt;
+                clientData[record.clientDetails].totalSaleAmount += record.saleAmount;
                 clientData[record.clientDetails].transactions.push({
                     date: record.date,
                     weighmentSlipNo: record.weighmentSlipNo,
-                    material: record.materialType,
+                    materialType: record.materialType,
                     netWt: record.netWt,
-                    rate: record.ratePerTone,
-                    amount: record.saleAmount
+                    ratePerTone: record.ratePerTone,
+                    saleAmount: record.saleAmount,
+                    vehicleNo: record.vehicleNo
                 });
             });
             
-            currentClientBillData = { month, client, clientData, materialTypes };
-            document.getElementById('clientBillActions').style.display = 'block';
+            currentClientReportData = { startDate, endDate, clientDetails, clientData };
+            document.getElementById('clientReportActions').style.display = 'block';
             
-            let reportHTML = '';
-            const monthName = new Date(month + '-01').toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+            const tableBody = document.getElementById('clientBillTable').querySelector('tbody');
+            tableBody.innerHTML = '';
             
-            reportHTML += `<div class="section-header">Client Wise Dispatch Bill - ${monthName}${client ? ` - ${client}` : ''}</div>`;
-            reportHTML += `<table class="client-bill-table">`;
-            reportHTML += `<thead><tr><th>Client Name</th>`;
-            materialTypes.forEach(material => reportHTML += `<th>${material}</th>`);
-            reportHTML += `<th>Total Tonnage</th><th>Total Amount</th></tr></thead><tbody>`;
-            
-            let grandTotalTonnage = 0;
-            let grandTotalAmount = 0;
-            const materialTotals = {};
-            materialTypes.forEach(material => materialTotals[material] = { tonnage: 0, amount: 0 });
-            
-            for (const clientName in clientData) {
-                reportHTML += `<tr><td>${clientName}</td>`;
+            for (const client in clientData) {
+                const row = tableBody.insertRow();
+                row.insertCell(0).textContent = client;
+                row.insertCell(1).textContent = clientData[client].totalTrips;
+                row.insertCell(2).textContent = clientData[client].totalNetWt.toFixed(2);
+                row.insertCell(3).textContent = clientData[client].totalSaleAmount.toFixed(2);
                 
-                materialTypes.forEach(material => {
-                    const tonnage = clientData[clientName].materials[material].tonnage;
-                    reportHTML += `<td>${tonnage > 0 ? tonnage.toFixed(2) : ''}</td>`;
-                    materialTotals[material].tonnage += tonnage;
-                });
+                const detailsCell = row.insertCell(4);
+                detailsCell.className = 'transaction-details';
                 
-                reportHTML += `<td>${clientData[clientName].totalTonnage.toFixed(2)}</td>`;
-                reportHTML += `<td>${clientData[clientName].totalAmount.toFixed(2)}</td></tr>`;
+                // Sort transactions by date
+                clientData[client].transactions.sort((a, b) => new Date(a.date) - new Date(b.date));
                 
-                grandTotalTonnage += clientData[clientName].totalTonnage;
-                grandTotalAmount += clientData[clientName].totalAmount;
-            }
-            
-            // Add totals row
-            reportHTML += `<tr class="client-bill-total"><td>Total</td>`;
-            materialTypes.forEach(material => {
-                reportHTML += `<td>${materialTotals[material].tonnage > 0 ? materialTotals[material].tonnage.toFixed(2) : ''}</td>`;
-            });
-            reportHTML += `<td>${grandTotalTonnage.toFixed(2)}</td>`;
-            reportHTML += `<td>${grandTotalAmount.toFixed(2)}</td></tr>`;
-            
-            reportHTML += `</tbody></table>`;
-            
-            // Add transaction details
-            reportHTML += `<div class="section-header">Transaction Details</div>`;
-            reportHTML += `<div class="transaction-details">`;
-            
-            for (const clientName in clientData) {
-                reportHTML += `<h5>${clientName}</h5>`;
-                reportHTML += `<div class="transaction-points">`;
-                
+                let currentMonth = '';
+                let monthTrips = 0;
+                let monthNetWt = 0;
+                let monthSaleAmount = 0;
                 let transactionCounter = 1;
-                clientData[clientName].transactions.forEach(tx => {
-                    reportHTML += `<div class="transaction-point">`;
-                    reportHTML += `${transactionCounter++}. Date: ${formatDate(tx.date)}, Slip No: ${tx.weighmentSlipNo}, Material: ${tx.material}, Net WT: ${tx.netWt.toFixed(2)} MT, Rate: ${tx.rate.toFixed(2)}, Amount: ${tx.amount.toFixed(2)}`;
-                    reportHTML += `</div>`;
+                
+                clientData[client].transactions.forEach(tx => {
+                    const monthYear = getMonthYear(tx.date);
+                    if (monthYear !== currentMonth) {
+                        if (currentMonth) {
+                            // Add month total
+                            detailsCell.innerHTML += `<div class="month-total transaction-row">Month Total: Trips: ${monthTrips}, Net WT: ${monthNetWt.toFixed(2)}, Sale Amount: ${monthSaleAmount.toFixed(2)}</div>`;
+                        }
+                        detailsCell.innerHTML += `<div class="month-header">${monthYear}</div>`;
+                        currentMonth = monthYear;
+                        monthTrips = 0;
+                        monthNetWt = 0;
+                        monthSaleAmount = 0;
+                    }
+                    
+                    detailsCell.innerHTML += `<div class="transaction-row vehicle-row">${transactionCounter++}. Date: ${formatDate(tx.date)}, Slip No: ${tx.weighmentSlipNo}, Material: ${tx.materialType}, Net WT: ${tx.netWt.toFixed(2)}, Rate: ${tx.ratePerTone.toFixed(2)}, Amount: ${tx.saleAmount.toFixed(2)}, Vehicle: ${tx.vehicleNo}</div>`;
+                    
+                    monthTrips += 1;
+                    monthNetWt += tx.netWt;
+                    monthSaleAmount += tx.saleAmount;
                 });
                 
-                reportHTML += `</div>`;
+                // Add last month total
+                if (currentMonth) {
+                    detailsCell.innerHTML += `<div class="month-total transaction-row">Month Total: Trips: ${monthTrips}, Net WT: ${monthNetWt.toFixed(2)}, Sale Amount: ${monthSaleAmount.toFixed(2)}</div>`;
+                }
+                
+                // Add grand total
+                detailsCell.innerHTML += `<div class="grand-total transaction-row">Grand Total: Trips: ${clientData[client].totalTrips}, Net WT: ${clientData[client].totalNetWt.toFixed(2)}, Sale Amount: ${clientData[client].totalSaleAmount.toFixed(2)}</div>`;
             }
-            
-            reportHTML += `</div>`;
-            
-            document.getElementById('clientBillContainer').innerHTML = reportHTML;
         }
         
         function downloadDispatchPDF() {
@@ -1684,63 +1629,62 @@
             
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
-            const { date, shift, customerData, materialTypes } = currentFtdReportData;
+            const { date, shift, materialTypes, dayCustomerData, nightCustomerData } = currentFtdReportData;
             
             doc.setFontSize(14);
             doc.text(`FTD Report - ${shift} - ${formatDate(date)}`, 14, 20);
             
-            // Add content based on shift selection
+            let currentY = 30;
+            
+            // Add day shift if applicable
             if (shift === "A-SHIFT" || shift === "ALL") {
-                doc.text("A-SHIFT (Day Shift) – Dispatch Vehicle Wise Planning", 14, 30);
+                doc.text("A-SHIFT (Day Shift) – Dispatch Vehicle Wise Planning", 14, currentY);
+                currentY += 10;
                 
                 const dayTableData = [];
-                for (const customer in customerData) {
-                    const hasDayRecords = allRecords.some(record => record.date === date && record.shift === "A-SHIFT" && record.clientDetails === customer);
-                    if (hasDayRecords) {
-                        const row = [customer];
-                        materialTypes.forEach(material => {
-                            row.push(customerData[customer].materials[material].tonnage > 0 ? customerData[customer].materials[material].tonnage.toFixed(2) : '');
-                        });
-                        row.push(customerData[customer].totalTonnage.toFixed(2));
-                        dayTableData.push(row);
-                    }
+                for (const customer in dayCustomerData) {
+                    const row = [customer];
+                    materialTypes.forEach(material => {
+                        row.push(dayCustomerData[customer].materials[material].tonnage > 0 ? dayCustomerData[customer].materials[material].tonnage.toFixed(2) : '');
+                    });
+                    row.push(dayCustomerData[customer].totalTonnage.toFixed(2));
+                    dayTableData.push(row);
                 }
                 
                 doc.autoTable({
                     head: [['Customer Name', ...materialTypes, 'TOTAL']],
                     body: dayTableData,
-                    startY: 40,
+                    startY: currentY,
                     styles: { fontSize: 8 },
                     headStyles: { fillColor: [44, 62, 80] },
                     alternateRowStyles: { fillColor: [240, 240, 240] }
                 });
+                currentY = doc.lastAutoTable.finalY + 20;
             }
             
+            // Add night shift if applicable
             if (shift === "B-SHIFT" || shift === "ALL") {
-                const startY = shift === "ALL" ? doc.lastAutoTable.finalY + 20 : 40;
-                if (shift === "ALL") {
+                if (currentY > 30 && shift === "ALL") {
                     doc.addPage();
+                    currentY = 20;
                 }
-                
-                doc.text("B-SHIFT (Night Shift) – Dispatch Vehicle Wise Planning", 14, startY);
+                doc.text("B-SHIFT (Night Shift) – Dispatch Vehicle Wise Planning", 14, currentY);
+                currentY += 10;
                 
                 const nightTableData = [];
-                for (const customer in customerData) {
-                    const hasNightRecords = allRecords.some(record => record.date === date && record.shift === "B-SHIFT" && record.clientDetails === customer);
-                    if (hasNightRecords) {
-                        const row = [customer];
-                        materialTypes.forEach(material => {
-                            row.push(customerData[customer].materials[material].tonnage > 0 ? customerData[customer].materials[material].tonnage.toFixed(2) : '');
-                        });
-                        row.push(customerData[customer].totalTonnage.toFixed(2));
-                        nightTableData.push(row);
-                    }
+                for (const customer in nightCustomerData) {
+                    const row = [customer];
+                    materialTypes.forEach(material => {
+                        row.push(nightCustomerData[customer].materials[material].tonnage > 0 ? nightCustomerData[customer].materials[material].tonnage.toFixed(2) : '');
+                    });
+                    row.push(nightCustomerData[customer].totalTonnage.toFixed(2));
+                    nightTableData.push(row);
                 }
                 
                 doc.autoTable({
                     head: [['Customer Name', ...materialTypes, 'TOTAL']],
                     body: nightTableData,
-                    startY: startY + 10,
+                    startY: currentY,
                     styles: { fontSize: 8 },
                     headStyles: { fillColor: [44, 62, 80] },
                     alternateRowStyles: { fillColor: [240, 240, 240] }
@@ -1784,37 +1728,63 @@
             
             doc.save(`Transport_Bill_${startDate}_to_${endDate}${vehicleNo ? `_${vehicleNo}` : ''}.pdf`);
         }
-        
+
         function downloadClientPDF() {
-            if (!currentClientBillData) {
+            if (!currentClientReportData) {
                 alert("No report data available to download.");
                 return;
             }
             
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
-            const { month, client, clientData, materialTypes } = currentClientBillData;
+            const { startDate, endDate, clientDetails, clientData } = currentClientReportData;
             
-            const monthName = new Date(month + '-01').toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
             doc.setFontSize(14);
-            doc.text(`Client Wise Dispatch Bill - ${monthName}${client ? ` - ${client}` : ''}`, 14, 20);
+            doc.text(`Client Wise Dispatch Bill Report - ${formatDate(startDate)} to ${formatDate(endDate)}${clientDetails ? ` - Client: ${clientDetails}` : ''}`, 14, 20);
             
             const tableData = [];
             
-            for (const clientName in clientData) {
-                const row = [clientName];
+            for (const client in clientData) {
+                let transactionsStr = '';
+                clientData[client].transactions.sort((a, b) => new Date(a.date) - new Date(b.date));
                 
-                materialTypes.forEach(material => {
-                    row.push(clientData[clientName].materials[material].tonnage > 0 ? clientData[clientName].materials[material].tonnage.toFixed(2) : '');
+                let currentMonth = '';
+                let monthTrips = 0;
+                let monthNetWt = 0;
+                let monthSaleAmount = 0;
+                let transactionCounter = 1;
+                
+                clientData[client].transactions.forEach(tx => {
+                    const monthYear = getMonthYear(tx.date);
+                    if (monthYear !== currentMonth) {
+                        if (currentMonth) {
+                            transactionsStr += `Month Total: Trips: ${monthTrips}, Net WT: ${monthNetWt.toFixed(2)}, Sale Amount: ${monthSaleAmount.toFixed(2)}\n`;
+                        }
+                        transactionsStr += `${monthYear}\n`;
+                        currentMonth = monthYear;
+                        monthTrips = 0;
+                        monthNetWt = 0;
+                        monthSaleAmount = 0;
+                    }
+                    
+                    transactionsStr += `${transactionCounter++}. Date: ${formatDate(tx.date)}, Slip No: ${tx.weighmentSlipNo}, Material: ${tx.materialType}, Net WT: ${tx.netWt.toFixed(2)}, Rate: ${tx.ratePerTone.toFixed(2)}, Amount: ${tx.saleAmount.toFixed(2)}, Vehicle: ${tx.vehicleNo}\n`;
+                    
+                    monthTrips += 1;
+                    monthNetWt += tx.netWt;
+                    monthSaleAmount += tx.saleAmount;
                 });
                 
-                row.push(clientData[clientName].totalTonnage.toFixed(2));
-                row.push(clientData[clientName].totalAmount.toFixed(2));
-                tableData.push(row);
+                if (currentMonth) {
+                    transactionsStr += `Month Total: Trips: ${monthTrips}, Net WT: ${monthNetWt.toFixed(2)}, Sale Amount: ${monthSaleAmount.toFixed(2)}\n`;
+                }
+                
+                transactionsStr += `Grand Total: Trips: ${clientData[client].totalTrips}, Net WT: ${clientData[client].totalNetWt.toFixed(2)}, Sale Amount: ${clientData[client].totalSaleAmount.toFixed(2)}`;
+                
+                tableData.push([client, clientData[client].totalTrips, clientData[client].totalNetWt.toFixed(2), clientData[client].totalSaleAmount.toFixed(2), transactionsStr]);
             }
             
             doc.autoTable({
-                head: [['Client Name', ...materialTypes, 'Total Tonnage', 'Total Amount']],
+                head: [['Client Details', 'Total Trips', 'Total NET WT (MT)', 'Total Sale Amount', 'Transaction Details']],
                 body: tableData,
                 startY: 30,
                 styles: { fontSize: 8 },
@@ -1822,7 +1792,7 @@
                 alternateRowStyles: { fillColor: [240, 240, 240] }
             });
             
-            doc.save(`Client_Bill_${month}${client ? `_${client.replace(/\s+/g, '_')}` : ''}.pdf`);
+            doc.save(`Client_Dispatch_Bill_${startDate}_to_${endDate}${clientDetails ? `_${clientDetails.replace(/\s+/g, '_')}` : ''}.pdf`);
         }
         
         function downloadDispatchExcel() {
@@ -1907,7 +1877,7 @@
                 return;
             }
             
-            const { date, shift, customerData, materialTypes, dayRecords, nightRecords } = currentFtdReportData;
+            const { date, shift, materialTypes, dayRecords, nightRecords, dayCustomerData, nightCustomerData } = currentFtdReportData;
             
             const excelData = [];
             excelData.push([`FTD Report - ${shift} - ${formatDate(date)}`]);
@@ -1954,16 +1924,13 @@
                 excelData.push(headerRow);
                 
                 // Add customer data
-                for (const customer in customerData) {
-                    const hasDayRecords = dayRecords.some(record => record.clientDetails === customer);
-                    if (hasDayRecords) {
-                        const row = [customer];
-                        materialTypes.forEach(material => {
-                            row.push(customerData[customer].materials[material].tonnage > 0 ? customerData[customer].materials[material].tonnage.toFixed(2) : '');
-                        });
-                        row.push(customerData[customer].totalTonnage.toFixed(2));
-                        excelData.push(row);
-                    }
+                for (const customer in dayCustomerData) {
+                    const row = [customer];
+                    materialTypes.forEach(material => {
+                        row.push(dayCustomerData[customer].materials[material].tonnage > 0 ? dayCustomerData[customer].materials[material].tonnage.toFixed(2) : '');
+                    });
+                    row.push(dayCustomerData[customer].totalTonnage.toFixed(2));
+                    excelData.push(row);
                 }
                 
                 // Add day shift totals
@@ -1991,16 +1958,13 @@
                 excelData.push(headerRow);
                 
                 // Add customer data
-                for (const customer in customerData) {
-                    const hasNightRecords = nightRecords.some(record => record.clientDetails === customer);
-                    if (hasNightRecords) {
-                        const row = [customer];
-                        materialTypes.forEach(material => {
-                            row.push(customerData[customer].materials[material].tonnage > 0 ? customerData[customer].materials[material].tonnage.toFixed(2) : '');
-                        });
-                        row.push(customerData[customer].totalTonnage.toFixed(2));
-                        excelData.push(row);
-                    }
+                for (const customer in nightCustomerData) {
+                    const row = [customer];
+                    materialTypes.forEach(material => {
+                        row.push(nightCustomerData[customer].materials[material].tonnage > 0 ? nightCustomerData[customer].materials[material].tonnage.toFixed(2) : '');
+                    });
+                    row.push(nightCustomerData[customer].totalTonnage.toFixed(2));
+                    excelData.push(row);
                 }
                 
                 // Add night shift totals
@@ -2125,47 +2089,78 @@
             // Save file
             XLSX.writeFile(wb, `Transport_Bill_${startDate}_to_${endDate}${vehicleNo ? `_${vehicleNo}` : ''}.xlsx`);
         }
-        
+
         function downloadClientExcel() {
-            if (!currentClientBillData) {
+            if (!currentClientReportData) {
                 alert("No report data available to download.");
                 return;
             }
             
-            const { month, client, clientData, materialTypes } = currentClientBillData;
+            const { startDate, endDate, clientDetails, clientData } = currentClientReportData;
             
             const excelData = [];
-            const monthName = new Date(month + '-01').toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
-            excelData.push([`Client Wise Dispatch Bill - ${monthName}${client ? ` - ${client}` : ''}`]);
+            excelData.push([`Client Wise Dispatch Bill Report - ${formatDate(startDate)} to ${formatDate(endDate)}${clientDetails ? ` - Client: ${clientDetails}` : ''}`]);
             excelData.push([]);
             
-            // Create header row
-            const headerRow = ['Client Name'];
-            materialTypes.forEach(material => headerRow.push(material));
-            headerRow.push('Total Tonnage');
-            headerRow.push('Total Amount');
-            excelData.push(headerRow);
-            
-            // Add client data
-            for (const clientName in clientData) {
-                const row = [clientName];
+            // For each client, add header and totals, then transactions grouped by month
+            for (const client in clientData) {
+                excelData.push([`Client: ${client}`]);
+                excelData.push(['Total Trips', clientData[client].totalTrips]);
+                excelData.push(['Total NET WT (MT)', clientData[client].totalNetWt.toFixed(2)]);
+                excelData.push(['Total Sale Amount', clientData[client].totalSaleAmount.toFixed(2)]);
+                excelData.push([]);
                 
-                materialTypes.forEach(material => {
-                    row.push(clientData[clientName].materials[material].tonnage > 0 ? clientData[clientName].materials[material].tonnage.toFixed(2) : '');
+                excelData.push(['Transactions:']);
+                const transHeader = ['Date', 'Slip No', 'Material', 'Net WT', 'Rate', 'Amount', 'Vehicle'];
+                excelData.push(transHeader);
+                
+                // Sort transactions by date
+                clientData[client].transactions.sort((a, b) => new Date(a.date) - new Date(b.date));
+                
+                let currentMonth = '';
+                let monthTrips = 0;
+                let monthNetWt = 0;
+                let monthSaleAmount = 0;
+                
+                clientData[client].transactions.forEach(tx => {
+                    const monthYear = getMonthYear(tx.date);
+                    if (monthYear !== currentMonth) {
+                        if (currentMonth) {
+                            // Add month total
+                            excelData.push(['Month Total:', '', '', monthTrips, '', monthNetWt.toFixed(2), monthSaleAmount.toFixed(2), '']);
+                        }
+                        excelData.push([monthYear]);
+                        currentMonth = monthYear;
+                        monthTrips = 0;
+                        monthNetWt = 0;
+                        monthSaleAmount = 0;
+                    }
+                    
+                    excelData.push([formatDate(tx.date), tx.weighmentSlipNo, tx.materialType, tx.netWt.toFixed(2), tx.ratePerTone.toFixed(2), tx.saleAmount.toFixed(2), tx.vehicleNo]);
+                    
+                    monthTrips += 1;
+                    monthNetWt += tx.netWt;
+                    monthSaleAmount += tx.saleAmount;
                 });
                 
-                row.push(clientData[clientName].totalTonnage.toFixed(2));
-                row.push(clientData[clientName].totalAmount.toFixed(2));
-                excelData.push(row);
+                // Add last month total
+                if (currentMonth) {
+                    excelData.push(['Month Total:', '', '', monthTrips, '', monthNetWt.toFixed(2), monthSaleAmount.toFixed(2), '']);
+                }
+                
+                // Add grand total
+                excelData.push(['Grand Total:', '', '', clientData[client].totalTrips, '', clientData[client].totalNetWt.toFixed(2), clientData[client].totalSaleAmount.toFixed(2), '']);
+                excelData.push([]);
+                excelData.push([]);
             }
             
             // Create worksheet
             const ws = XLSX.utils.aoa_to_sheet(excelData);
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, 'Client Bill');
+            XLSX.utils.book_append_sheet(wb, ws, 'Client Dispatch Bill');
             
             // Save file
-            XLSX.writeFile(wb, `Client_Bill_${month}${client ? `_${client.replace(/\s+/g, '_')}` : ''}.xlsx`);
+            XLSX.writeFile(wb, `Client_Dispatch_Bill_${startDate}_to_${endDate}${clientDetails ? `_${clientDetails.replace(/\s+/g, '_')}` : ''}.xlsx`);
         }
         
         function exportToExcel() {
